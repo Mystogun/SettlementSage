@@ -1,10 +1,4581 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Settlement Sage</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 10px;
+            background-color: #f5f5f5;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 15px;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            font-size: clamp(1.5rem, 5vw, 2.5rem);
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+        }
+
+        h2, h3 {
+            font-size: clamp(1.2rem, 4vw, 2rem);
+            color: #2c3e50;
+        }
+
+        .board-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+            margin-bottom: 5px;
+            min-height: 44px;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        button.active {
+            background-color: #27ae60;
+        }
+
+        .board-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+            margin: 10px 0;
+        }
+
+        .legend {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+            font-size: clamp(12px, 3vw, 14px);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 5px;
+        }
+
+        .color-box {
+            min-width: 16px;
+            width: 20px;
+            height: 20px;
+            border: 1px solid #333;
+            flex-shrink: 0;
+        }
+
+        .setup-options {
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: clamp(12px, 3vw, 14px);
+        }
+
+        .setup-options label {
+            margin-right: 10px;
+            white-space: nowrap;
+        }
+
+        .game-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            padding: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            font-size: clamp(12px, 3vw, 14px);
+        }
+
+        .stat-value {
+            font-size: clamp(18px, 5vw, 24px);
+            font-weight: bold;
+            color: #3498db;
+        }
+
+        .resource-box {
+            width: 15px;
+            height: 15px;
+            display: inline-block;
+            margin-right: 5px;
+            border: 1px solid #333;
+            flex-shrink: 0;
+        }
+
+        .board-type {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .warning {
+            color: #e74c3c;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .rules {
+            background-color: #eaf3fa;
+            padding: 10px;
+            border-left: 4px solid #3498db;
+            margin: 10px 0;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+            flex-wrap: wrap;
+        }
+
+
+        .tab {
+            padding: 8px 15px;
+            cursor: pointer;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            transition: background-color 0.3s;
+            font-size: clamp(12px, 3vw, 14px);
+        }
+
+        .tab.active {
+            background-color: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+
+        .tab:hover:not(.active) {
+            background-color: #e9ecef;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .manual-layout-controls {
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .manual-layout-panel {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: flex-start;
+        }
+
+        .control-group {
+            margin-bottom: 10px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .resource-selector {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .resource-option {
+            display: flex;
+            align-items: center;
+            border: 2px solid transparent;
+            padding: 5px 8px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: clamp(12px, 3vw, 14px);
+        }
+
+        .resource-option:hover {
+            transform: scale(1.05);
+        }
+
+        .resource-option.selected {
+            border-color: #3498db;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+        }
+
+        .resource-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            margin-right: 5px;
+        }
+
+        .number-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(35px, 1fr));
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+
+        .number-button {
+            width: 100%;
+            aspect-ratio: 1;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+            font-size: clamp(11px, 3vw, 14px);
+        }
+
+        .number-button:hover {
+            transform: scale(1.1);
+            background-color: #f0f0f0;
+        }
+
+        .number-button.selected {
+            background-color: #3498db;
+            color: white;
+            border-color: #2980b9;
+        }
+
+        .number-button.red-number {
+            color: red;
+        }
+
+        .instruction {
+            font-style: italic;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .layout-progress {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .placement-summary {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .placement-group {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            min-width: 160px;
+            flex: 1;
+            margin-bottom: 10px;
+            font-size: clamp(12px, 3vw, 14px);
+        }
+
+        .placement-group h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+
+        .placement-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .placement-count {
+            margin-left: auto;
+            font-weight: bold;
+        }
+
+        .placement-max {
+            color: #666;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+
+        /* Port Styling */
+        .port-controls {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+        }
+
+        .port-selector {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .port-option {
+            display: flex;
+            align-items: center;
+            border: 2px solid transparent;
+            padding: 5px 8px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: clamp(12px, 3vw, 14px);
+        }
+
+        .port-option:hover {
+            transform: scale(1.05);
+        }
+
+        .port-option.selected {
+            border-color: #3498db;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+        }
+
+        .port-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            margin-right: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 12px;
+        }
+
+        .port-mode-selector {
+            margin-bottom: 15px;
+        }
+
+        .port-mode-option {
+            margin-right: 15px;
+            cursor: pointer;
+        }
+
+        .port-badge {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            text-align: center;
+            line-height: 20px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+
+        .analysis-toggle {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .detail-explanation {
+            margin-top: 10px;
+            font-size: clamp(12px, 3vw, 14px);
+            line-height: 1.5;
+            background-color: #fff8e1;
+            border-left: 4px solid #ffd54f;
+            padding: 10px;
+        }
+
+        .settlement-details {
+            margin-top: 15px;
+        }
+
+        .detail-component {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .detail-component span {
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        .detail-value {
+            margin-left: auto;
+        }
+
+        .detail-positive {
+            color: #27ae60;
+        }
+
+        .detail-negative {
+            color: #e74c3c;
+        }
+
+        @media (max-width: 768px) {
+            .board-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            button {
+                width: 100%;
+                margin-bottom: 8px;
+            }
+
+            .manual-layout-panel {
+                flex-direction: column;
+            }
+
+            .resource-selector, .number-selector, .port-selector {
+                justify-content: center;
+            }
+
+            .game-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .setup-options {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .setup-options label {
+                margin-bottom: 5px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 10px;
+            }
+
+            .placement-group {
+                min-width: 100%;
+            }
+
+            .legend {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .tabs {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .tab {
+                margin-right: 0;
+                border-radius: 0;
+            }
+
+            .tab:first-child {
+                border-radius: 5px 5px 0 0;
+            }
+
+            .detail-component span {
+                width: auto;
+                margin-right: 5px;
+            }
+        }
+
+        /* Touch-friendly adjustments */
+        @media (pointer: coarse) {
+            .resource-option, .port-option, .number-button {
+                min-height: 44px;
+            }
+
+            .setup-options label {
+                padding: 5px 0;
+            }
+
+            input[type="checkbox"] {
+                width: 20px;
+                height: 20px;
+            }
+        }
+
+        /* Canvas resize handling for different screen widths */
+        @media (max-width: 920px) {
+            #catan-board {
+                width: 100% !important;
+                height: auto !important;
+                max-width: 800px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            #catan-board {
+                max-width: 450px;
+            }
+        }
+
+        /* Fix for validation message */
+        #validation-message, #manual-validation-message {
+            overflow-x: auto;
+            max-width: 100%;
+        }
+
+        /* Make port and resource visualizations flex containers */
+        .port-icon, .resource-icon {
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .copyright-footer {
+            margin-top: 30px;
+            padding: 15px 0;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            width: 100%;
+            text-align: center;
+            font-size: 14px;
+            border-radius: 5px;
+        }
+
+        .copyright-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        .copyright-text {
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .copyright-disclaimer {
+            font-size: 12px;
+            color: #bdc3c7;
+            margin: 0;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .copyright-footer {
+                font-size: 12px;
+                padding: 10px 0;
+            }
+
+            .copyright-disclaimer {
+                font-size: 10px;
+            }
+        }
+    </style>
 </head>
 <body>
-$END$
+<h1>Settlement Sage</h1>
+
+<div class="container">
+    <h2>Board Setup</h2>
+    <p>This calculator shows the optimal settlement locations based on resource probabilities and port access.</p>
+
+    <div class="tabs">
+        <div class="tab active" data-tab="standard">Standard Mode</div>
+        <div class="tab" data-tab="manual">Manual Design Mode</div>
+    </div>
+
+    <div id="standard-tab" class="tab-content active">
+        <div class="rules">
+            <h3>Official Catan Placement Rules</h3>
+            <ul>
+                <li><strong>Adjacent Numbers Rule:</strong> High-probability numbers (6 and 8) should never be on adjacent hexes</li>
+                <li><strong>Red Numbers Rule:</strong> Red numbers (6 and 8) should not be on the same resource type if possible</li>
+                <li><strong>Port Placement:</strong> 9 ports are placed around the perimeter (5 specific resource ports at 2:1 ratio, 4 generic ports at 3:1 ratio)</li>
+                <li>These rules help ensure a more balanced game experience</li>
+            </ul>
+        </div>
+
+        <div class="board-controls">
+            <button id="toggle-board">Toggle Board Size (3-4 / 5-6 players)</button>
+            <button id="random-board">Generate Random Board</button>
+            <button id="standard-layout">Use Standard Layout</button>
+            <button id="calculate">Calculate Best Spots</button>
+            <button id="clear">Clear Board</button>
+            <button id="validate">Validate Board</button>
+        </div>
+
+        <div class="setup-options">
+            <label><input type="checkbox" id="show-numbers" checked> Show hex numbers</label>
+            &nbsp;&nbsp;
+            <label><input type="checkbox" id="show-dots" checked> Show probability dots</label>
+            &nbsp;&nbsp;
+            <label><input type="checkbox" id="show-vertices" checked> Show settlement spots</label>
+            &nbsp;&nbsp;
+            <label><input type="checkbox" id="show-ports" checked> Show ports</label>
+        </div>
+
+        <div class="board-type" id="board-type-display">Current board: 3-4 player standard</div>
+        <div id="validation-message"></div>
+    </div>
+
+    <div id="manual-tab" class="tab-content">
+        <div class="manual-layout-controls">
+            <h3>Manual Board Designer</h3>
+            <p class="instruction">Design your own Catan board by selecting resources and numbers, then clicking on the hexes where you want to place them.</p>
+
+            <div class="manual-layout-panel">
+                <div class="control-group">
+                    <label>1. Select Resource Type:</label>
+                    <div class="resource-selector">
+                        <div class="resource-option selected" data-resource="desert">
+                            <div class="resource-icon" style="background-color: #DFA55B;"></div>
+                            Desert
+                        </div>
+                        <div class="resource-option" data-resource="brick">
+                            <div class="resource-icon" style="background-color: #C55A11;"></div>
+                            Brick
+                        </div>
+                        <div class="resource-option" data-resource="wood">
+                            <div class="resource-icon" style="background-color: #548235;"></div>
+                            Wood
+                        </div>
+                        <div class="resource-option" data-resource="sheep">
+                            <div class="resource-icon" style="background-color: #9BBB59;"></div>
+                            Sheep
+                        </div>
+                        <div class="resource-option" data-resource="wheat">
+                            <div class="resource-icon" style="background-color: #F9E076;"></div>
+                            Wheat
+                        </div>
+                        <div class="resource-option" data-resource="ore">
+                            <div class="resource-icon" style="background-color: #7F7F7F;"></div>
+                            Ore
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>2. Select Number Token:</label>
+                    <div class="number-selector">
+                        <div class="number-button selected" data-number="0">-</div>
+                        <div class="number-button" data-number="2">2</div>
+                        <div class="number-button" data-number="3">3</div>
+                        <div class="number-button" data-number="4">4</div>
+                        <div class="number-button" data-number="5">5</div>
+                        <div class="number-button red-number" data-number="6">6</div>
+                        <div class="number-button red-number" data-number="8">8</div>
+                        <div class="number-button" data-number="9">9</div>
+                        <div class="number-button" data-number="10">10</div>
+                        <div class="number-button" data-number="11">11</div>
+                        <div class="number-button" data-number="12">12</div>
+                    </div>
+                </div>
+            </div>
+
+            <p class="instruction">3. Click on a hex on the board to place the selected resource and number.</p>
+
+            <div class="board-controls">
+                <button id="manual-toggle-board">Toggle Board Size (3-4 / 5-6 players)</button>
+                <button id="manual-reset">Reset Board</button>
+                <button id="manual-calculate">Calculate Best Spots</button>
+                <button id="manual-validate">Validate Board</button>
+                <button id="manual-randomize">Randomize Remaining</button>
+            </div>
+
+            <div class="port-controls">
+                <h3>Port Placement</h3>
+                <div class="port-mode-selector">
+                    <label class="port-mode-option">
+                        <input type="radio" name="port-mode" value="standard" checked> Use Standard Port Layout
+                    </label>
+                    <label class="port-mode-option">
+                        <input type="radio" name="port-mode" value="random"> Random Port Layout
+                    </label>
+                    <label class="port-mode-option">
+                        <input type="radio" name="port-mode" value="manual"> Manual Port Placement
+                    </label>
+                </div>
+
+                <div id="manual-port-controls" style="display: none;">
+                    <p class="instruction">Select a port type below, then click on a coastal vertex to place it.</p>
+                    <div class="port-selector">
+                        <div class="port-option selected" data-port="generic">
+                            <div class="port-icon" style="background-color: #607D8B;">3:1</div>
+                            Any Resource
+                        </div>
+                        <div class="port-option" data-port="brick">
+                            <div class="port-icon" style="background-color: #C55A11;">2:1</div>
+                            Brick
+                        </div>
+                        <div class="port-option" data-port="wood">
+                            <div class="port-icon" style="background-color: #548235;">2:1</div>
+                            Wood
+                        </div>
+                        <div class="port-option" data-port="sheep">
+                            <div class="port-icon" style="background-color: #9BBB59;">2:1</div>
+                            Sheep
+                        </div>
+                        <div class="port-option" data-port="wheat">
+                            <div class="port-icon" style="background-color: #F9E076; color: black;">2:1</div>
+                            Wheat
+                        </div>
+                        <div class="port-option" data-port="ore">
+                            <div class="port-icon" style="background-color: #7F7F7F;">2:1</div>
+                            Ore
+                        </div>
+                    </div>
+                    <button id="remove-port">Remove Port</button>
+                </div>
+
+                <div class="placement-group">
+                    <h4>Ports <span class="port-badge" id="port-count">0</span></h4>
+                    <div class="placement-item">
+                        <div class="port-icon" style="background-color: #607D8B; width: 20px; height: 20px; font-size: 10px;">3:1</div>
+                        Generic: <span id="generic-port-count">0</span>
+                        <span class="placement-max">/4</span>
+                    </div>
+                    <div class="placement-item">
+                        <div class="port-icon" style="background-color: #C55A11; width: 20px; height: 20px; font-size: 10px;">2:1</div>
+                        Brick: <span id="brick-port-count">0</span>
+                        <span class="placement-max">/1</span>
+                    </div>
+                    <div class="placement-item">
+                        <div class="port-icon" style="background-color: #548235; width: 20px; height: 20px; font-size: 10px;">2:1</div>
+                        Wood: <span id="wood-port-count">0</span>
+                        <span class="placement-max">/1</span>
+                    </div>
+                    <div class="placement-item">
+                        <div class="port-icon" style="background-color: #9BBB59; width: 20px; height: 20px; font-size: 10px;">2:1</div>
+                        Sheep: <span id="sheep-port-count">0</span>
+                        <span class="placement-max">/1</span>
+                    </div>
+                    <div class="placement-item">
+                        <div class="port-icon" style="background-color: #F9E076; width: 20px; height: 20px; font-size: 10px; color: black;">2:1</div>
+                        Wheat: <span id="wheat-port-count">0</span>
+                        <span class="placement-max">/1</span>
+                    </div>
+                    <div class="placement-item">
+                        <div class="port-icon" style="background-color: #7F7F7F; width: 20px; height: 20px; font-size: 10px;">2:1</div>
+                        Ore: <span id="ore-port-count">0</span>
+                        <span class="placement-max">/1</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="validation-options" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
+                <h4 style="margin-top: 0;">Validation Options</h4>
+                <label style="display: block; margin-bottom: 5px;">
+                    <input type="checkbox" id="allow-custom-distribution" checked> Allow non-standard resource/number distribution
+                </label>
+                <label style="display: block; margin-bottom: 5px;">
+                    <input type="checkbox" id="allow-adjacent-high-prob" checked> Allow adjacent high probability numbers (6 & 8)
+                </label>
+                <button id="reset-to-standard" style="margin-top: 10px;">Reset Validation to Official Rules</button>
+                <button id="suggest-fixes" style="margin-left: 10px;">Suggest Board Adjustments</button>
+            </div>
+
+            <div class="layout-progress" id="layout-progress">
+                Select resources and numbers to place on the board
+            </div>
+
+            <div class="placement-summary">
+                <div class="placement-group">
+                    <h4>Resources</h4>
+                    <div class="placement-item">
+                        <div class="resource-box" style="background-color: #C55A11;"></div>
+                        Brick: <span id="brick-count">0</span>
+                        <span class="placement-max" id="brick-max"></span>
+                    </div>
+                    <div class="placement-item">
+                        <div class="resource-box" style="background-color: #548235;"></div>
+                        Wood: <span id="wood-count">0</span>
+                        <span class="placement-max" id="wood-max"></span>
+                    </div>
+                    <div class="placement-item">
+                        <div class="resource-box" style="background-color: #9BBB59;"></div>
+                        Sheep: <span id="sheep-count">0</span>
+                        <span class="placement-max" id="sheep-max"></span>
+                    </div>
+                    <div class="placement-item">
+                        <div class="resource-box" style="background-color: #F9E076;"></div>
+                        Wheat: <span id="wheat-count">0</span>
+                        <span class="placement-max" id="wheat-max"></span>
+                    </div>
+                    <div class="placement-item">
+                        <div class="resource-box" style="background-color: #7F7F7F;"></div>
+                        Ore: <span id="ore-count">0</span>
+                        <span class="placement-max" id="ore-max"></span>
+                    </div>
+                    <div class="placement-item">
+                        <div class="resource-box" style="background-color: #DFA55B;"></div>
+                        Desert: <span id="desert-count">0</span>
+                        <span class="placement-max" id="desert-max"></span>
+                    </div>
+                </div>
+
+                <div class="placement-group">
+                    <h4>Number Tokens</h4>
+                    <div class="placement-item">
+                        2: <span id="num2-count">0</span>
+                        <span class="placement-max" id="num2-max"></span>
+                    </div>
+                    <div class="placement-item">
+                        3: <span id="num3-count">0</span>
+                        <span class="placement-max" id="num3-max"></span>
+                    </div>
+                    <div class="placement-item">
+                        4: <span id="num4-count">0</span>
+                        <span class="placement-max" id="num4-max"></span>
+                    </div>
+                    <div class="placement-item">
+                        5: <span id="num5-count">0</span>
+                        <span class="placement-max" id="num5-max"></span>
+                    </div>
+                    <div class="placement-item">
+                        6: <span id="num6-count">0</span>
+                        <span class="placement-max" id="num6-max"></span>
+                    </div>
+                    <div class="placement-item">
+                        8: <span id="num8-count">0</span>
+                        <span class="placement-max" id="num8-max"></span>
+                    </div>
+                    <div class="placement-item">
+                        9: <span id="num9-count">0</span>
+                        <span class="placement-max" id="num9-max"></span>
+                    </div>
+                    <div class="placement-item">
+                        10: <span id="num10-count">0</span>
+                        <span class="placement-max" id="num10-max"></span>
+                    </div>
+                    <div class="placement-item">
+                        11: <span id="num11-count">0</span>
+                        <span class="placement-max" id="num11-max"></span>
+                    </div>
+                    <div class="placement-item">
+                        12: <span id="num12-count">0</span>
+                        <span class="placement-max" id="num12-max"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="manual-validation-message"></div>
+
+        <div id="board-suggestions" class="board-suggestions" style="margin-top: 15px; padding: 15px; background-color: #e3f2fd; border-radius: 5px; display: none;"></div>
+    </div>
+
+    <div class="board-container">
+        <canvas id="catan-board" width="900" height="750"></canvas>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="color-box" style="background-color: #FF5252;"></div>
+                <span>Low Value (0-2)</span>
+            </div>
+            <div class="legend-item">
+                <div class="color-box" style="background-color: #FFEB3B;"></div>
+                <span>Medium Value (3-5)</span>
+            </div>
+            <div class="legend-item">
+                <div class="color-box" style="background-color: #4FC3F7;"></div>
+                <span>Good Value (6-8)</span>
+            </div>
+            <div class="legend-item">
+                <div class="color-box" style="background-color: #66BB6A;"></div>
+                <span>Excellent Value (9+)</span>
+            </div>
+            <div class="legend-item">
+                <div style="margin-left: 10px; border-left: 2px solid #ccc; padding-left: 10px;">
+                    <div class="port-icon" style="display: inline-block; background-color: #607D8B; width: 20px; height: 20px; font-size: 10px; text-align: center; line-height: 20px; color: white; border-radius: 5px;">3:1</div>
+                    <span>Generic Port</span>
+                </div>
+            </div>
+            <div class="legend-item">
+                <div class="port-icon" style="display: inline-block; background-color: #3498db; width: 20px; height: 20px; font-size: 10px; text-align: center; line-height: 20px; color: white; border-radius: 5px;">2:1</div>
+                <span>Resource Port</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="analysis-toggle">
+        <label>
+            <input type="checkbox" id="show-detailed-analysis"> Show detailed settlement value analysis
+        </label>
+    </div>
+
+    <div class="game-stats">
+        <div class="stat-card">
+            <h4>Board Analysis</h4>
+            <div id="best-spots"></div>
+        </div>
+        <div class="stat-card">
+            <h4>Resource Distribution</h4>
+            <div id="resource-distribution"></div>
+        </div>
+        <div id="detailed-analysis" class="stat-card" style="display: none;">
+            <h4>Detailed Settlement Value Analysis</h4>
+            <p class="detail-explanation">
+                Settlement values are calculated based on multiple factors:
+            </p>
+            <ul>
+                <li><strong>Resource Probability:</strong> Base value from adjacent hex probability dots (0-15)</li>
+                <li><strong>Resource Diversity:</strong> Bonus for having access to more unique resources</li>
+                <li><strong>Port Value:</strong> Bonus for settlements on ports (higher for matching resource ports)</li>
+            </ul>
+            <div id="settlement-details" class="settlement-details">
+                <!-- Detailed analysis will be inserted here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="copyright-footer">
+    <div class="copyright-container">
+        <p class="copyright-text">
+            &copy; 2025 Settlement Sage. All rights reserved.
+        </p>
+        <p class="copyright-disclaimer">
+            This is a fan-made calculator tool. Not affiliated with or endorsed by Catan GmbH or Asmodee Digital.
+            "Catan" is a registered trademark of Catan GmbH.
+        </p>
+    </div>
+</footer>
+<script>
+    // Global constants
+    const HEX_RADIUS = 50;
+    const WIDTH = 900;
+    const HEIGHT = 750;
+
+    // Board configuration
+    let is56PlayerMode = false;
+    let showNumbers = true;
+    let showDots = true;
+    let showVertices = true;
+    let showPorts = true;
+    let isManualMode = false;
+    let isDetailedAnalysis = false;
+    let portPlacementMode = "standard"; // standard, random, or manual
+    let isRemovingPort = false;
+    let allowCustomDistribution = true;
+    let allowAdjacentHighProb = true;
+
+    // Manual layout selections
+    let selectedResource = "desert";
+    let selectedNumber = 0;
+    let selectedPort = "generic";
+
+    // Canvas setup
+    const canvas = document.getElementById('catan-board');
+    const ctx = canvas.getContext('2d');
+
+    // Resource colors
+    const resourceColors = {
+        brick: '#C55A11',  // Brown
+        wood: '#548235',   // Dark green
+        sheep: '#9BBB59',  // Light green
+        wheat: '#F9E076',  // Yellow
+        ore: '#7F7F7F',    // Gray
+        desert: '#DFA55B'  // Tan
+    };
+
+    // Port colors
+    const portColors = {
+        generic: '#607D8B', // Blue-gray for 3:1 generic ports
+        brick: '#C55A11',
+        wood: '#548235',
+        sheep: '#9BBB59',
+        wheat: '#F9E076',
+        ore: '#7F7F7F'
+    };
+
+    // Resource limits for different board sizes
+    const resourceLimits = {
+        "3-4": {
+            brick: 3,
+            wood: 4,
+            sheep: 4,
+            wheat: 4,
+            ore: 3,
+            desert: 1
+        },
+        "5-6": {
+            brick: 5,
+            wood: 6,
+            sheep: 6,
+            wheat: 6,
+            ore: 5,
+            desert: 2
+        }
+    };
+
+    // Number token limits for different board sizes
+    const numberLimits = {
+        "3-4": {
+            2: 1,
+            3: 2,
+            4: 2,
+            5: 2,
+            6: 2,
+            8: 2,
+            9: 2,
+            10: 2,
+            11: 2,
+            12: 1
+        },
+        "5-6": {
+            2: 2,
+            3: 3,
+            4: 3,
+            5: 3,
+            6: 3,
+            8: 3,
+            9: 3,
+            10: 3,
+            11: 3,
+            12: 2
+        }
+    };
+
+    // Port limits
+    const portLimits = {
+        generic: 4,
+        brick: 1,
+        wood: 1,
+        sheep: 1,
+        wheat: 1,
+        ore: 1
+    };
+
+    // Data structures
+    let hexes = [];
+    let vertices = [];
+    let edges = [];
+    let ports = [];
+
+    // Standard layout for 3-4 players
+    const standardSetup34 = [
+        {type: 'brick', number: 10},
+        {type: 'sheep', number: 2},
+        {type: 'wheat', number: 9},
+        {type: 'wood', number: 12},
+        {type: 'sheep', number: 6},
+        {type: 'brick', number: 4},
+        {type: 'wheat', number: 10},
+        {type: 'wood', number: 9},
+        {type: 'ore', number: 11},
+        {type: 'desert', number: 0},
+        {type: 'ore', number: 3},
+        {type: 'wood', number: 8},
+        {type: 'ore', number: 8},
+        {type: 'wood', number: 3},
+        {type: 'wheat', number: 4},
+        {type: 'sheep', number: 5},
+        {type: 'brick', number: 5},
+        {type: 'wheat', number: 6},
+        {type: 'sheep', number: 11}
+    ];
+
+    // Standard layout for 5-6 players (extends standard layout)
+    const standardSetup56 = [
+        // Same as 3-4 player board (first 19 hexes)
+        {type: 'brick', number: 10},
+        {type: 'sheep', number: 2},
+        {type: 'wheat', number: 9},
+        {type: 'wood', number: 12},
+        {type: 'sheep', number: 6},
+        {type: 'brick', number: 4},
+        {type: 'wheat', number: 10},
+        {type: 'wood', number: 9},
+        {type: 'ore', number: 11},
+        {type: 'desert', number: 0},
+        {type: 'ore', number: 3},
+        {type: 'wood', number: 8},
+        {type: 'ore', number: 8},
+        {type: 'wood', number: 3},
+        {type: 'wheat', number: 4},
+        {type: 'sheep', number: 5},
+        {type: 'brick', number: 5},
+        {type: 'wheat', number: 6},
+        {type: 'sheep', number: 11},
+        // Additional hexes for 5-6 player expansion
+        {type: 'wood', number: 4},
+        {type: 'sheep', number: 3},
+        {type: 'brick', number: 5},
+        {type: 'wheat', number: 10},
+        {type: 'ore', number: 11},
+        {type: 'desert', number: 0},
+        {type: 'sheep', number: 2},
+        {type: 'brick', number: 9},
+        {type: 'wheat', number: 12},
+        {type: 'wood', number: 8},
+        {type: 'ore', number: 6}
+    ];
+
+    // Standard port layouts by vertex index pairs
+    // Each entry is [vertexId1, vertexId2, portType]
+    const standardPortSetup34 = [];
+    const standardPortSetup56 = [];
+
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Update active tab
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            // Update active content
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            const tabId = tab.getAttribute('data-tab');
+            document.getElementById(`${tabId}-tab`).classList.add('active');
+
+            // Set manual mode flag
+            isManualMode = tabId === 'manual';
+
+            // Update placement counters in manual mode
+            if (isManualMode) {
+                updatePlacementCounters();
+            }
+        });
+    });
+
+    // Event listeners for standard mode
+    document.getElementById('toggle-board').addEventListener('click', toggleBoardSize);
+    document.getElementById('random-board').addEventListener('click', generateRandomBoard);
+    document.getElementById('standard-layout').addEventListener('click', useStandardLayout);
+    document.getElementById('calculate').addEventListener('click', () => {
+        calculateBestSpots();
+        drawBoard();
+        updateBoardStats();
+    });
+    document.getElementById('clear').addEventListener('click', clearBoard);
+    document.getElementById('validate').addEventListener('click', validateBoard);
+    document.getElementById('show-numbers').addEventListener('change', e => {
+        showNumbers = e.target.checked;
+        drawBoard();
+    });
+    document.getElementById('show-dots').addEventListener('change', e => {
+        showDots = e.target.checked;
+        drawBoard();
+    });
+    document.getElementById('show-vertices').addEventListener('change', e => {
+        showVertices = e.target.checked;
+        drawBoard();
+    });
+    document.getElementById('show-ports').addEventListener('change', e => {
+        showPorts = e.target.checked;
+        drawBoard();
+    });
+    document.getElementById('show-detailed-analysis').addEventListener('change', e => {
+        isDetailedAnalysis = e.target.checked;
+        document.getElementById('detailed-analysis').style.display = isDetailedAnalysis ? 'block' : 'none';
+        if (isDetailedAnalysis) {
+            updateDetailedAnalysis();
+        }
+    });
+
+    // Event listeners for manual mode
+    document.getElementById('manual-toggle-board').addEventListener('click', () => {
+        toggleBoardSize();
+        updatePlacementCounters();
+    });
+    document.getElementById('manual-reset').addEventListener('click', () => {
+        clearBoard();
+        updatePlacementCounters();
+    });
+    document.getElementById('manual-calculate').addEventListener('click', () => {
+        calculateBestSpots();
+        drawBoard();
+        updateBoardStats();
+        if (isDetailedAnalysis) {
+            updateDetailedAnalysis();
+        }
+    });
+    document.getElementById('manual-validate').addEventListener('click', () => {
+        const validationResult = validateBoard();
+        document.getElementById('manual-validation-message').innerHTML = document.getElementById('validation-message').innerHTML;
+    });
+    document.getElementById('allow-custom-distribution').addEventListener('change', function(e) {
+        allowCustomDistribution = e.target.checked;
+    });
+    document.getElementById('allow-adjacent-high-prob').addEventListener('change', function(e) {
+        allowAdjacentHighProb = e.target.checked;
+    });
+    document.getElementById('reset-to-standard').addEventListener('click', function() {
+        document.getElementById('allow-custom-distribution').checked = false;
+        document.getElementById('allow-adjacent-high-prob').checked = false;
+        allowCustomDistribution = false;
+        allowAdjacentHighProb = false;
+    });
+    document.getElementById('manual-randomize').addEventListener('click', randomizeRemainingHexes);
+    document.getElementById('remove-port').addEventListener('click', toggleRemovePortMode);
+    document.getElementById('suggest-fixes').addEventListener('click', suggestBoardAdjustments);
+
+
+    // Port mode radio buttons
+    document.querySelectorAll('input[name="port-mode"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            portPlacementMode = radio.value;
+            document.getElementById('manual-port-controls').style.display = (portPlacementMode === 'manual') ? 'block' : 'none';
+
+            if (portPlacementMode === 'standard') {
+                resetPorts();
+                setupStandardPorts();
+                drawBoard();
+            } else if (portPlacementMode === 'random') {
+                resetPorts();
+                randomizePorts();
+                drawBoard();
+            }
+
+            updatePortCounters();
+        });
+    });
+
+    // Resource selector in manual mode
+    document.querySelectorAll('.resource-option').forEach(option => {
+        option.addEventListener('click', () => {
+            document.querySelectorAll('.resource-option').forEach(o => o.classList.remove('selected'));
+            option.classList.add('selected');
+            selectedResource = option.getAttribute('data-resource');
+        });
+    });
+
+    // Number selector in manual mode
+    document.querySelectorAll('.number-button').forEach(button => {
+        button.addEventListener('click', () => {
+            document.querySelectorAll('.number-button').forEach(b => b.classList.remove('selected'));
+            button.classList.add('selected');
+            selectedNumber = parseInt(button.getAttribute('data-number'));
+        });
+    });
+
+    // Port selector in manual mode
+    document.querySelectorAll('.port-option').forEach(option => {
+        option.addEventListener('click', () => {
+            document.querySelectorAll('.port-option').forEach(o => o.classList.remove('selected'));
+            option.classList.add('selected');
+            selectedPort = option.getAttribute('data-port');
+            isRemovingPort = false;
+        });
+    });
+
+    // Initialize the board
+    initializeBoard();
+
+    // ===== Board Initialization =====
+    function initializeBoard() {
+        hexes = [];
+        vertices = [];
+        edges = [];
+        ports = [];
+
+        generateHexGrid();
+        generateVerticesAndEdges();
+        useStandardLayout();
+
+        // Update board type display
+        updateBoardTypeDisplay();
+    }
+
+    function updateBoardTypeDisplay() {
+        const boardTypeDisplay = document.getElementById('board-type-display');
+        boardTypeDisplay.textContent = `Current board: ${is56PlayerMode ? '5-6' : '3-4'} player ${hexes.some(h => h.number > 0) ? 'custom' : 'standard'}`;
+    }
+
+    function generateHexGrid() {
+        const centerX = WIDTH / 2;
+        const centerY = HEIGHT / 2;
+
+        if (!is56PlayerMode) {
+            // 3-4 player board
+            const rows = [3, 4, 5, 4, 3];
+            let id = 0;
+
+            for (let row = 0; row < rows.length; row++) {
+                const hexesInRow = rows[row];
+                const rowOffset = (row - 2) * (HEX_RADIUS * 1.5);
+                const startX = centerX - ((hexesInRow - 1) * HEX_RADIUS * Math.sqrt(3) / 2);
+
+                for (let col = 0; col < hexesInRow; col++) {
+                    const x = startX + (col * HEX_RADIUS * Math.sqrt(3));
+                    const y = centerY + rowOffset;
+
+                    hexes.push({
+                        id,
+                        x,
+                        y,
+                        row,
+                        col,
+                        type: 'desert',
+                        number: 0,
+                        vertices: [],
+                        neighbors: []
+                    });
+
+                    id++;
+                }
+            }
+        } else {
+            // 5-6 player board with 7 rows (3-4-5-6-5-4-3)
+            const rows = [3, 4, 5, 6, 5, 4, 3];
+            let id = 0;
+
+            for (let row = 0; row < rows.length; row++) {
+                const hexesInRow = rows[row];
+                const rowOffset = (row - 3) * (HEX_RADIUS * 1.5); // Center on row 3 (the one with 6 hexes)
+                const startX = centerX - ((hexesInRow - 1) * HEX_RADIUS * Math.sqrt(3) / 2);
+
+                for (let col = 0; col < hexesInRow; col++) {
+                    const x = startX + (col * HEX_RADIUS * Math.sqrt(3));
+                    const y = centerY + rowOffset;
+
+                    hexes.push({
+                        id,
+                        x,
+                        y,
+                        row,
+                        col,
+                        type: 'desert',
+                        number: 0,
+                        vertices: [],
+                        neighbors: []
+                    });
+
+                    id++;
+                }
+            }
+        }
+
+        // Calculate hex neighbors for adjacency checks
+        calculateHexNeighbors();
+    }
+
+    function calculateHexNeighbors() {
+        // Find adjacent hexes for each hex
+        hexes.forEach(hex => {
+            hex.neighbors = [];
+
+            const neighborDistanceThreshold = HEX_RADIUS * 2.1; // Slightly more than 2*radius to account for rounding
+
+            hexes.forEach(otherHex => {
+                if (hex.id !== otherHex.id) {
+                    const distance = Math.sqrt(
+                        Math.pow(hex.x - otherHex.x, 2) +
+                        Math.pow(hex.y - otherHex.y, 2)
+                    );
+
+                    if (distance < neighborDistanceThreshold) {
+                        hex.neighbors.push(otherHex.id);
+                    }
+                }
+            });
+        });
+    }
+
+    function generateVerticesAndEdges() {
+        const vertexMap = {};
+
+        // Generate vertices at each corner of each hex
+        hexes.forEach(hex => {
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI / 3) * i - Math.PI / 6;
+                const x = hex.x + HEX_RADIUS * Math.cos(angle);
+                const y = hex.y + HEX_RADIUS * Math.sin(angle);
+
+                // Use a key to identify unique vertices (rounded to avoid floating point issues)
+                const key = `${Math.round(x * 10) / 10},${Math.round(y * 10) / 10}`;
+
+                if (!vertexMap[key]) {
+                    // Create a new vertex
+                    const vertex = {
+                        id: vertices.length,
+                        x,
+                        y,
+                        hexes: [hex.id],
+                        isCoastal: false, // Will be determined later
+                        port: null,
+                        value: 0,
+                        resources: new Set(),
+                        valueComponents: { // For detailed analysis
+                            resourceProbability: 0,
+                            resourceDiversity: 0,
+                            portValue: 0
+                        }
+                    };
+
+                    vertices.push(vertex);
+                    vertexMap[key] = vertex;
+                } else {
+                    // Add this hex to the existing vertex if not already there
+                    if (!vertexMap[key].hexes.includes(hex.id)) {
+                        vertexMap[key].hexes.push(hex.id);
+                    }
+                }
+
+                // Connect the vertex to the hex
+                hex.vertices.push(vertexMap[key].id);
+            }
+        });
+
+        // Determine coastal vertices (those with fewer than 3 connected hexes)
+        vertices.forEach(vertex => {
+            if (vertex.hexes.length < 3) {
+                vertex.isCoastal = true;
+            }
+        });
+
+        // Generate edges between vertices
+        generateEdges();
+    }
+
+    function generateEdges() {
+        edges = [];
+
+        // Find all vertex pairs that are connected (share a hex)
+        for (let i = 0; i < vertices.length; i++) {
+            for (let j = i + 1; j < vertices.length; j++) {
+                const v1 = vertices[i];
+                const v2 = vertices[j];
+
+                // Check if they share a hex and are close enough to be an edge
+                let sharedHex = false;
+                for (const hexId1 of v1.hexes) {
+                    for (const hexId2 of v2.hexes) {
+                        if (hexId1 === hexId2) {
+                            sharedHex = true;
+                            break;
+                        }
+                    }
+                    if (sharedHex) break;
+                }
+
+                if (sharedHex) {
+                    // Calculate distance between vertices
+                    const distance = Math.sqrt(
+                        Math.pow(v1.x - v2.x, 2) +
+                        Math.pow(v1.y - v2.y, 2)
+                    );
+
+                    // Check if the distance is close to one side of a hex
+                    if (Math.abs(distance - HEX_RADIUS) < 5) {
+                        // This is an edge
+                        const edge = {
+                            id: edges.length,
+                            v1: v1.id,
+                            v2: v2.id,
+                            isCoastal: v1.isCoastal && v2.isCoastal
+                        };
+
+                        edges.push(edge);
+                    }
+                }
+            }
+        }
+    }
+
+    // ===== Port Functions =====
+    function setupStandardPorts() {
+        // Identify coastal edges (edges where both vertices are coastal)
+        const coastalEdges = edges.filter(edge => edge.isCoastal);
+
+        // For standard layout, distribute ports evenly around the coast
+        // 9 ports total: 4 generic (3:1) and 5 resource-specific (2:1)
+        if (coastalEdges.length >= 9) {
+            // Shuffle coastal edges to randomize placement
+            const shuffledEdges = [...coastalEdges];
+            shuffle(shuffledEdges);
+
+            // Take a subset for port placement
+            const portEdges = shuffledEdges.slice(0, 9);
+
+            // Standard distribution: 4 generic, 1 of each resource
+            const portTypes = ['generic', 'generic', 'generic', 'generic', 'brick', 'wood', 'sheep', 'wheat', 'ore'];
+            shuffle(portTypes);
+
+            // Create ports
+            for (let i = 0; i < portEdges.length; i++) {
+                const edge = portEdges[i];
+                const portType = portTypes[i];
+                const ratio = (portType === 'generic') ? 3 : 2;
+
+                // Create new port
+                const port = {
+                    id: ports.length,
+                    type: portType,
+                    ratio: ratio,
+                    edge: edge.id,
+                    vertices: [edge.v1, edge.v2]
+                };
+
+                // Add port to the list
+                ports.push(port);
+
+                // Update vertices to reference this port
+                vertices[edge.v1].port = port.id;
+                vertices[edge.v2].port = port.id;
+            }
+        }
+
+        updatePortCounters();
+    }
+
+    function randomizePorts() {
+        resetPorts(); // Clear existing ports
+
+        // Get all coastal edges
+        const coastalEdges = edges.filter(edge => edge.isCoastal);
+
+        // Shuffle coastal edges to randomize placement
+        const shuffledEdges = [...coastalEdges];
+        shuffle(shuffledEdges);
+
+        // Determine number of ports based on board size
+        const numPorts = is56PlayerMode ? 11 : 9;
+
+        // Take a subset for port placement
+        const portEdges = shuffledEdges.slice(0, numPorts);
+
+        // Determine port types
+        const numGenericPorts = is56PlayerMode ? 5 : 4;
+        const portTypes = Array(numGenericPorts).fill('generic');
+
+        const resourceTypes = ['brick', 'wood', 'sheep', 'wheat', 'ore'];
+        portTypes.push(...resourceTypes);
+
+        // Add extra resource ports for 5-6 player board
+        if (is56PlayerMode) {
+            // Pick one random resource type to duplicate
+            const extraResourceType = resourceTypes[Math.floor(Math.random() * resourceTypes.length)];
+            portTypes.push(extraResourceType);
+        }
+
+        // Shuffle port types
+        shuffle(portTypes);
+
+        // Create ports
+        for (let i = 0; i < portEdges.length; i++) {
+            const edge = portEdges[i];
+            const portType = portTypes[i];
+            const ratio = (portType === 'generic') ? 3 : 2;
+
+            // Create new port
+            const port = {
+                id: ports.length,
+                type: portType,
+                ratio: ratio,
+                edge: edge.id,
+                vertices: [edge.v1, edge.v2]
+            };
+
+            // Add port to the list
+            ports.push(port);
+
+            // Update vertices to reference this port
+            vertices[edge.v1].port = port.id;
+            vertices[edge.v2].port = port.id;
+        }
+
+        updatePortCounters();
+    }
+
+    function addPort(vertexId) {
+        // Check if this vertex is coastal
+        const vertex = vertices[vertexId];
+        if (!vertex.isCoastal) return false;
+
+        // Check if this vertex already has a port
+        if (vertex.port !== null) return false;
+
+        // Find a coastal edge connected to this vertex
+        const connectedEdges = edges.filter(edge =>
+            (edge.v1 === vertexId || edge.v2 === vertexId) && edge.isCoastal
+        );
+
+        if (connectedEdges.length === 0) return false;
+
+        // Get the first coastal edge
+        const edge = connectedEdges[0];
+
+        // Get the other vertex of this edge
+        const otherVertexId = (edge.v1 === vertexId) ? edge.v2 : edge.v1;
+
+        // Check if the other vertex already has a port
+        if (vertices[otherVertexId].port !== null) return false;
+
+        // Create port
+        const ratio = (selectedPort === 'generic') ? 3 : 2;
+        const port = {
+            id: ports.length,
+            type: selectedPort,
+            ratio: ratio,
+            edge: edge.id,
+            vertices: [vertexId, otherVertexId]
+        };
+
+        // Add port to the list
+        ports.push(port);
+
+        // Update vertices to reference this port
+        vertices[vertexId].port = port.id;
+        vertices[otherVertexId].port = port.id;
+
+        // Update counters and redraw
+        updatePortCounters();
+        drawBoard();
+
+        return true;
+    }
+
+    function removePort(vertexId) {
+        // Check if this vertex has a port
+        const vertex = vertices[vertexId];
+        if (vertex.port === null) return false;
+
+        // Get the port
+        const port = ports.find(p => p.id === vertex.port);
+        if (!port) return false;
+
+        // Remove port references from both vertices
+        vertices[port.vertices[0]].port = null;
+        vertices[port.vertices[1]].port = null;
+
+        // Remove port from the list
+        ports = ports.filter(p => p.id !== port.id);
+
+        // Update counters and redraw
+        updatePortCounters();
+        drawBoard();
+
+        return true;
+    }
+
+    function resetPorts() {
+        // Reset all vertex port references
+        vertices.forEach(vertex => {
+            vertex.port = null;
+        });
+
+        // Clear ports list
+        ports = [];
+
+        updatePortCounters();
+    }
+
+    function updatePortCounters() {
+        // Count ports by type
+        const portCounts = {
+            generic: 0,
+            brick: 0,
+            wood: 0,
+            sheep: 0,
+            wheat: 0,
+            ore: 0
+        };
+
+        ports.forEach(port => {
+            portCounts[port.type]++;
+        });
+
+        // Update the counters in the UI
+        document.getElementById('port-count').textContent = ports.length;
+        document.getElementById('generic-port-count').textContent = portCounts.generic;
+        document.getElementById('brick-port-count').textContent = portCounts.brick;
+        document.getElementById('wood-port-count').textContent = portCounts.wood;
+        document.getElementById('sheep-port-count').textContent = portCounts.sheep;
+        document.getElementById('wheat-port-count').textContent = portCounts.wheat;
+        document.getElementById('ore-port-count').textContent = portCounts.ore;
+
+        // Highlight if over limit
+        for (const type in portCounts) {
+            const countElement = document.getElementById(`${type}-port-count`);
+            if (portCounts[type] > portLimits[type]) {
+                countElement.style.color = '#e74c3c';
+            } else {
+                countElement.style.color = '';
+            }
+        }
+    }
+
+    function toggleRemovePortMode() {
+        isRemovingPort = !isRemovingPort;
+        document.getElementById('remove-port').textContent = isRemovingPort ? 'Cancel Removal' : 'Remove Port';
+
+        if (isRemovingPort) {
+            document.querySelectorAll('.port-option').forEach(o => o.classList.remove('selected'));
+        } else {
+            // Re-select the previously selected port type
+            const portOption = document.querySelector(`.port-option[data-port="${selectedPort}"]`);
+            if (portOption) {
+                portOption.classList.add('selected');
+            }
+        }
+    }
+
+    // ===== Drawing Functions =====
+    function drawBoard() {
+        // Clear the canvas
+        ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
+        // Draw hexes
+        hexes.forEach(drawHex);
+
+        // Draw ports
+        if (showPorts) {
+            drawPorts();
+        }
+
+        // Draw vertices if enabled
+        if (showVertices) {
+            vertices.forEach(drawVertex);
+        }
+    }
+
+    function drawHex(hex) {
+        // Draw the hexagon
+        ctx.beginPath();
+
+        for (let i = 0; i < 6; i++) {
+            const angle = (Math.PI / 3) * i - Math.PI / 6;
+            const x = hex.x + HEX_RADIUS * Math.cos(angle);
+            const y = hex.y + HEX_RADIUS * Math.sin(angle);
+
+            if (i === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        }
+
+        ctx.closePath();
+
+        // Fill with resource color
+        ctx.fillStyle = resourceColors[hex.type] || '#e0e0e0';
+        ctx.fill();
+
+        // Draw border
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Draw number token (if not desert)
+        if (hex.number > 0 && showNumbers) {
+            // Draw circular token
+            ctx.beginPath();
+            ctx.arc(hex.x, hex.y, HEX_RADIUS * 0.4, 0, Math.PI * 2);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fill();
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Draw number
+            ctx.font = 'bold 20px Arial';
+            ctx.fillStyle = (hex.number === 6 || hex.number === 8) ? 'red' : 'black';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(hex.number.toString(), hex.x, hex.y - 7);
+
+            // Draw dots
+            if (showDots) {
+                const dots = getProbabilityDots(hex.number);
+                ctx.fillStyle = (hex.number === 6 || hex.number === 8) ? 'red' : 'black';
+
+                let dotsText = '';
+                for (let i = 0; i < dots; i++) {
+                    dotsText += '•';
+                }
+                ctx.font = '14px Arial';
+                ctx.fillText(dotsText, hex.x, hex.y + 10);
+            }
+        }
+
+        // Draw hex ID for reference (small text at bottom of hex)
+        ctx.font = '10px Arial';
+        ctx.fillStyle = '#333';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`#${hex.id}`, hex.x, hex.y + (HEX_RADIUS * 0.7));
+    }
+
+    function drawVertex(vertex) {
+        // Skip vertices with less than 2 adjacent hexes (they're on the edge and not valid for settlements)
+        if (vertex.hexes.length < 2) return;
+
+        // Determine color based on value
+        let color;
+
+        if (vertex.value >= 9) {
+            color = '#66BB6A'; // Green - Excellent
+        } else if (vertex.value >= 6) {
+            color = '#4FC3F7'; // Blue - Good
+        } else if (vertex.value >= 3) {
+            color = '#FFEB3B'; // Yellow - Medium
+        } else {
+            color = '#FF5252'; // Red - Low
+        }
+
+        // Draw settlement spot
+        ctx.beginPath();
+        ctx.arc(vertex.x, vertex.y, 10, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Draw value number
+        ctx.font = 'bold 11px Arial';
+        ctx.fillStyle = (vertex.value >= 6) ? 'white' : 'black';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(vertex.value.toString(), vertex.x, vertex.y);
+    }
+
+    // This code snippet focuses on the port-related functions that need fixing
+
+    function drawPorts() {
+        // Draw each port
+        ports.forEach(port => {
+            // Get the two vertices this port connects
+            const v1 = vertices[port.vertices[0]];
+            const v2 = vertices[port.vertices[1]];
+
+            // Calculate midpoint between vertices
+            const midX = (v1.x + v2.x) / 2;
+            const midY = (v1.y + v2.y) / 2;
+
+            // Calculate the angle between the two vertices
+            const angle = Math.atan2(v2.y - v1.y, v2.x - v1.x);
+
+            // Calculate perpendicular vector (outward from the board center)
+            // First get the board center
+            const boardCenterX = WIDTH / 2;
+            const boardCenterY = HEIGHT / 2;
+
+            // Calculate vector from board center to midpoint
+            const vx = midX - boardCenterX;
+            const vy = midY - boardCenterY;
+
+            // Normalize this vector
+            const length = Math.sqrt(vx * vx + vy * vy);
+            const normalizedVx = vx / length;
+            const normalizedVy = vy / length;
+
+            // Use this normalized vector for port offset (consistent direction away from board)
+            const offset = HEX_RADIUS * 0.7; // Adjust this value as needed
+            const portX = midX + normalizedVx * offset;
+            const portY = midY + normalizedVy * offset;
+
+            // Draw port icon
+            ctx.beginPath();
+            ctx.arc(portX, portY, 15, 0, Math.PI * 2);
+            ctx.fillStyle = portColors[port.type];
+            ctx.fill();
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Draw the port ratio text
+            ctx.font = 'bold 11px Arial';
+            ctx.fillStyle = (port.type === 'wheat') ? 'black' : 'white';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(`${port.ratio}:1`, portX, portY);
+
+            // Draw lines connecting port to both vertices (thinner and lighter)
+            ctx.beginPath();
+            ctx.moveTo(v1.x, v1.y);
+            ctx.lineTo(portX, portY);
+            ctx.lineTo(v2.x, v2.y);
+            ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        });
+    }
+
+    function setupStandardPorts() {
+        // Start with fresh ports
+        resetPorts();
+
+        // Get all coastal edges
+        const coastalEdges = edges.filter(edge => edge.isCoastal);
+
+        // For the standard layout, we need to distribute ports evenly around the coast
+        if (coastalEdges.length >= 9) {
+            // Get a more logical distribution by sorting edges by their position
+            // This will help place ports around the perimeter in a more regular pattern
+
+            // First, calculate center point of each edge
+            coastalEdges.forEach(edge => {
+                const v1 = vertices[edge.v1];
+                const v2 = vertices[edge.v2];
+                edge.centerX = (v1.x + v2.x) / 2;
+                edge.centerY = (v1.y + v2.y) / 2;
+
+                // Calculate angle from board center to edge center
+                const boardCenterX = WIDTH / 2;
+                const boardCenterY = HEIGHT / 2;
+                edge.angle = Math.atan2(edge.centerY - boardCenterY, edge.centerX - boardCenterX);
+            });
+
+            // Sort edges by angle, this will give us a clockwise or counterclockwise order around the board
+            coastalEdges.sort((a, b) => a.angle - b.angle);
+
+            // Now select edges with roughly equal spacing
+            const numPorts = 9;
+            const selectedEdges = [];
+
+            // If we have more coastal edges than ports, we can space them out
+            if (coastalEdges.length > numPorts) {
+                const step = coastalEdges.length / numPorts;
+                for (let i = 0; i < numPorts; i++) {
+                    // Use Math.floor to get integer indices, with a small offset to center
+                    const index = Math.floor(i * step + step / 2) % coastalEdges.length;
+                    selectedEdges.push(coastalEdges[index]);
+                }
+            } else {
+                // Fallback if we don't have enough edges
+                selectedEdges.push(...coastalEdges);
+            }
+
+            // Standard distribution: 4 generic, 1 of each resource (brick, wood, sheep, wheat, ore)
+            const portTypes = ['generic', 'generic', 'generic', 'generic', 'brick', 'wood', 'sheep', 'wheat', 'ore'];
+
+            // Randomly assign types to edges
+            shuffle(portTypes);
+
+            // Create ports
+            for (let i = 0; i < selectedEdges.length && i < portTypes.length; i++) {
+                const edge = selectedEdges[i];
+                const portType = portTypes[i];
+                const ratio = (portType === 'generic') ? 3 : 2;
+
+                // Create new port
+                const port = {
+                    id: ports.length,
+                    type: portType,
+                    ratio: ratio,
+                    edge: edge.id,
+                    vertices: [edge.v1, edge.v2]
+                };
+
+                // Add port to the list
+                ports.push(port);
+
+                // Update vertices to reference this port
+                vertices[edge.v1].port = port.id;
+                vertices[edge.v2].port = port.id;
+            }
+        }
+
+        updatePortCounters();
+    }
+
+    function randomizePorts() {
+        resetPorts(); // Clear existing ports
+
+        // Get all coastal edges
+        const coastalEdges = edges.filter(edge => edge.isCoastal);
+
+        // Calculate center point and angle for each edge as in setupStandardPorts
+        coastalEdges.forEach(edge => {
+            const v1 = vertices[edge.v1];
+            const v2 = vertices[edge.v2];
+            edge.centerX = (v1.x + v2.x) / 2;
+            edge.centerY = (v1.y + v2.y) / 2;
+
+            const boardCenterX = WIDTH / 2;
+            const boardCenterY = HEIGHT / 2;
+            edge.angle = Math.atan2(edge.centerY - boardCenterY, edge.centerX - boardCenterX);
+        });
+
+        // Sort edges by angle
+        coastalEdges.sort((a, b) => a.angle - b.angle);
+
+        // Determine number of ports based on board size
+        const numPorts = is56PlayerMode ? 11 : 9;
+
+        // Select edges with roughly equal spacing
+        const selectedEdges = [];
+
+        if (coastalEdges.length > numPorts) {
+            const step = coastalEdges.length / numPorts;
+            for (let i = 0; i < numPorts; i++) {
+                const index = Math.floor(i * step + step / 2) % coastalEdges.length;
+                selectedEdges.push(coastalEdges[index]);
+            }
+        } else {
+            selectedEdges.push(...coastalEdges);
+        }
+
+        // Determine port types
+        const numGenericPorts = is56PlayerMode ? 5 : 4;
+        const portTypes = Array(numGenericPorts).fill('generic');
+
+        const resourceTypes = ['brick', 'wood', 'sheep', 'wheat', 'ore'];
+        portTypes.push(...resourceTypes);
+
+        // Add extra resource ports for 5-6 player board
+        if (is56PlayerMode) {
+            // Pick one random resource type to duplicate
+            const extraResourceType = resourceTypes[Math.floor(Math.random() * resourceTypes.length)];
+            portTypes.push(extraResourceType);
+        }
+
+        // Shuffle port types
+        shuffle(portTypes);
+
+        // Create ports
+        for (let i = 0; i < selectedEdges.length && i < portTypes.length; i++) {
+            const edge = selectedEdges[i];
+            const portType = portTypes[i];
+            const ratio = (portType === 'generic') ? 3 : 2;
+
+            // Create new port
+            const port = {
+                id: ports.length,
+                type: portType,
+                ratio: ratio,
+                edge: edge.id,
+                vertices: [edge.v1, edge.v2]
+            };
+
+            // Add port to the list
+            ports.push(port);
+
+            // Update vertices to reference this port
+            vertices[edge.v1].port = port.id;
+            vertices[edge.v2].port = port.id;
+        }
+
+        updatePortCounters();
+    }
+
+    function addPort(vertexId) {
+        // Check if this vertex is coastal
+        const vertex = vertices[vertexId];
+        if (!vertex.isCoastal) return false;
+
+        // Check if this vertex already has a port
+        if (vertex.port !== null) return false;
+
+        // Find a coastal edge connected to this vertex
+        const connectedEdges = edges.filter(edge =>
+            (edge.v1 === vertexId || edge.v2 === vertexId) && edge.isCoastal
+        );
+
+        if (connectedEdges.length === 0) return false;
+
+        // Check if any adjacent vertices already have ports
+        // This helps prevent overcrowding of ports
+        const adjacentVertices = [];
+        for (const edge of connectedEdges) {
+            adjacentVertices.push(edge.v1 === vertexId ? edge.v2 : edge.v1);
+        }
+
+        // Check if any adjacent vertex already has a port
+        for (const adjVertex of adjacentVertices) {
+            if (vertices[adjVertex].port !== null) {
+                // Already has a port, find the next best edge
+                continue;
+            }
+
+            // Find the edge connecting to this vertex
+            const edge = connectedEdges.find(e =>
+                e.v1 === adjVertex || e.v2 === adjVertex
+            );
+
+            if (edge) {
+                // Create port
+                const ratio = (selectedPort === 'generic') ? 3 : 2;
+                const port = {
+                    id: ports.length,
+                    type: selectedPort,
+                    ratio: ratio,
+                    edge: edge.id,
+                    vertices: [vertexId, adjVertex]
+                };
+
+                // Add port to the list
+                ports.push(port);
+
+                // Update vertices to reference this port
+                vertices[vertexId].port = port.id;
+                vertices[adjVertex].port = port.id;
+
+                // Update counters and redraw
+                updatePortCounters();
+                drawBoard();
+
+                return true;
+            }
+        }
+
+        // If we get here, we couldn't find a suitable edge
+        alert("No suitable edge found. Ports should be placed on coastal edges and not too close to other ports.");
+        return false;
+    }
+
+    // Function to check if a port would be too close to existing ports
+    function isPortTooClose(edge) {
+        // Get center point of this edge
+        const v1 = vertices[edge.v1];
+        const v2 = vertices[edge.v2];
+        const centerX = (v1.x + v2.x) / 2;
+        const centerY = (v1.y + v2.y) / 2;
+
+        // Check distance to all existing ports
+        for (const port of ports) {
+            const portEdge = edges[port.edge];
+            const portV1 = vertices[portEdge.v1];
+            const portV2 = vertices[portEdge.v2];
+            const portCenterX = (portV1.x + portV2.x) / 2;
+            const portCenterY = (portV1.y + portV2.y) / 2;
+
+            const distance = Math.sqrt(
+                Math.pow(centerX - portCenterX, 2) +
+                Math.pow(centerY - portCenterY, 2)
+            );
+
+            // If distance is less than 2 hex radii, consider it too close
+            if (distance < HEX_RADIUS * 2) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // ===== Game Logic Functions =====
+    function calculateBestSpots() {
+        // Reset all vertex values
+        vertices.forEach(vertex => {
+            vertex.value = 0;
+            vertex.resources = new Set();
+            vertex.valueComponents = {
+                resourceProbability: 0,
+                resourceDiversity: 0,
+                portValue: 0
+            };
+        });
+
+        // Calculate value for each vertex based on surrounding hexes
+        vertices.forEach(vertex => {
+            // Skip vertices with less than 2 adjacent hexes (they're on the edge and not valid for settlements)
+            if (vertex.hexes.length < 2) return;
+
+            // Get all hexes connected to this vertex
+            const connectedHexes = vertex.hexes.map(hexId => hexes[hexId]);
+
+            // Calculate base value from resource probability
+            let resourceProbabilityValue = 0;
+            for (const hex of connectedHexes) {
+                if (hex.number > 0) { // Skip desert
+                    const dotValue = getProbabilityDots(hex.number);
+                    resourceProbabilityValue += dotValue;
+                    vertex.resources.add(hex.type);
+                }
+            }
+            vertex.valueComponents.resourceProbability = resourceProbabilityValue;
+
+            // Add bonus for resource diversity
+            const uniqueResources = vertex.resources.size;
+            let diversityBonus = 0;
+            if (uniqueResources >= 3) {
+                diversityBonus = 1; // Bonus for 3+ different resources
+            }
+            vertex.valueComponents.resourceDiversity = diversityBonus;
+
+            // Add bonus for port access
+            let portValue = 0;
+            if (vertex.port !== null) {
+                const port = ports.find(p => p.id === vertex.port);
+                if (port) {
+                    if (port.type === 'generic') {
+                        portValue = 1; // Base value for 3:1 port
+                    } else {
+                        // Check if this vertex produces the port's resource
+                        if (vertex.resources.has(port.type)) {
+                            portValue = 2; // Higher value for matching resource port
+                        } else {
+                            portValue = 1; // Still valuable but not as much
+                        }
+                    }
+                }
+            }
+            vertex.valueComponents.portValue = portValue;
+
+            // Calculate total value
+            vertex.value = resourceProbabilityValue + diversityBonus + portValue;
+        });
+    }
+
+    function updateBoardStats() {
+        // Find all valid settlement vertices (those with at least 2 hexes)
+        const settlementVertices = vertices.filter(v => v.hexes.length >= 2);
+
+        // Sort vertices by value (highest first)
+        const sortedVertices = [...settlementVertices].sort((a, b) => b.value - a.value);
+
+        // Get resource distribution
+        const resourceCounts = {};
+        hexes.forEach(hex => {
+            if (hex.type !== 'desert') {
+                resourceCounts[hex.type] = (resourceCounts[hex.type] || 0) + 1;
+            }
+        });
+
+        // Display best spots
+        let bestSpotsHtml = '<p><strong>Top 5 Settlement Spots:</strong></p><ol>';
+        for (let i = 0; i < Math.min(5, sortedVertices.length); i++) {
+            const vertex = sortedVertices[i];
+            const resources = Array.from(vertex.resources).map(r =>
+                `<div class="resource-box" style="background-color: ${resourceColors[r]}"></div>`
+            ).join('');
+
+            let portInfo = '';
+            if (vertex.port !== null) {
+                const port = ports.find(p => p.id === vertex.port);
+                if (port) {
+                    portInfo = ` <div class="port-icon" style="display: inline-block; background-color: ${portColors[port.type]}; width: 15px; height: 15px; font-size: 8px; text-align: center; line-height: 15px; color: ${port.type === 'wheat' ? 'black' : 'white'}; border-radius: 50%;">${port.ratio}:1</div>`;
+                }
+            }
+
+            bestSpotsHtml += `<li>Value ${vertex.value}: ${resources}${portInfo}</li>`;
+        }
+        bestSpotsHtml += '</ol>';
+
+        // Add settlement distribution summary
+        const valueCounts = {
+            excellent: sortedVertices.filter(v => v.value >= 9).length,
+            good: sortedVertices.filter(v => v.value >= 6 && v.value < 9).length,
+            medium: sortedVertices.filter(v => v.value >= 3 && v.value < 6).length,
+            low: sortedVertices.filter(v => v.value < 3).length
+        };
+
+        bestSpotsHtml += `<p><strong>Settlement Spots:</strong></p>
+                <div>Excellent (9+): ${valueCounts.excellent}</div>
+                <div>Good (6-8): ${valueCounts.good}</div>
+                <div>Medium (3-5): ${valueCounts.medium}</div>
+                <div>Low (0-2): ${valueCounts.low}</div>`;
+
+        document.getElementById('best-spots').innerHTML = bestSpotsHtml;
+
+        // Display resource distribution
+        let resourceHtml = '';
+        for (const [resource, count] of Object.entries(resourceCounts)) {
+            resourceHtml += `<div>
+                    <div class="resource-box" style="background-color: ${resourceColors[resource]}"></div>
+                    ${resource.charAt(0).toUpperCase() + resource.slice(1)}: ${count} hex${count !== 1 ? 'es' : ''}
+                </div>`;
+        }
+
+        // Add desert count
+        const desertCount = hexes.filter(h => h.type === 'desert').length;
+        resourceHtml += `<div>
+                <div class="resource-box" style="background-color: ${resourceColors.desert}"></div>
+                Desert: ${desertCount} hex${desertCount !== 1 ? 'es' : ''}
+            </div>`;
+
+        // Add port distribution
+        if (ports.length > 0) {
+            resourceHtml += `<p><strong>Port Distribution:</strong></p>`;
+
+            const portCounts = {};
+            ports.forEach(port => {
+                portCounts[port.type] = (portCounts[port.type] || 0) + 1;
+            });
+
+            for (const [type, count] of Object.entries(portCounts)) {
+                const ratio = type === 'generic' ? 3 : 2;
+                resourceHtml += `<div>
+                        <div class="port-icon" style="display: inline-block; background-color: ${portColors[type]}; width: 15px; height: 15px; font-size: 8px; text-align: center; line-height: 15px; color: ${type === 'wheat' ? 'black' : 'white'}; border-radius: 50%;">${ratio}:1</div>
+                        ${type.charAt(0).toUpperCase() + type.slice(1)}: ${count} port${count !== 1 ? 's' : ''}
+                    </div>`;
+            }
+        }
+
+        document.getElementById('resource-distribution').innerHTML = resourceHtml;
+
+        // Update detailed analysis if it's being shown
+        if (isDetailedAnalysis) {
+            updateDetailedAnalysis(sortedVertices);
+        }
+    }
+
+    function updateDetailedAnalysis(sortedVertices) {
+        if (!sortedVertices) {
+            // Find all valid settlement vertices (those with at least 2 hexes)
+            const settlementVertices = vertices.filter(v => v.hexes.length >= 2);
+
+            // Sort vertices by value (highest first)
+            sortedVertices = [...settlementVertices].sort((a, b) => b.value - a.value);
+        }
+
+        // Display detailed analysis for top spots
+        let detailsHtml = '<p>Value analysis for top 3 settlement spots:</p>';
+
+        for (let i = 0; i < Math.min(3, sortedVertices.length); i++) {
+            const vertex = sortedVertices[i];
+            const resources = Array.from(vertex.resources).join(', ');
+
+            let portInfo = 'None';
+            if (vertex.port !== null) {
+                const port = ports.find(p => p.id === vertex.port);
+                if (port) {
+                    portInfo = `${port.ratio}:1 ${port.type.charAt(0).toUpperCase() + port.type.slice(1)}`;
+                }
+            }
+
+            detailsHtml += `<div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #ddd;">
+                    <strong>Settlement #${i+1} - Total Value: ${vertex.value}</strong> (Resources: ${resources})<br>
+                    Port: ${portInfo}
+
+                    <div class="settlement-details">
+                        <div class="detail-component">
+                            <span>Resource Probability:</span>
+                            <div class="detail-value">${vertex.valueComponents.resourceProbability}</div>
+                        </div>
+                        <div class="detail-component">
+                            <span>Resource Diversity Bonus:</span>
+                            <div class="detail-value ${vertex.valueComponents.resourceDiversity > 0 ? 'detail-positive' : ''}">${vertex.valueComponents.resourceDiversity > 0 ? '+' : ''}${vertex.valueComponents.resourceDiversity}</div>
+                        </div>
+                        <div class="detail-component">
+                            <span>Port Value:</span>
+                            <div class="detail-value ${vertex.valueComponents.portValue > 0 ? 'detail-positive' : ''}">${vertex.valueComponents.portValue > 0 ? '+' : ''}${vertex.valueComponents.portValue}</div>
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        document.getElementById('settlement-details').innerHTML = detailsHtml;
+    }
+
+    // Board validation function for placement rules
+    function validateBoard() {
+        const validationMessageContainer = isManualMode ?
+            document.getElementById('manual-validation-message') :
+            document.getElementById('validation-message');
+
+        let isValid = true;
+        let message = "";
+
+        // Always show resource and number counts
+        message += generateResourceNumberCounts();
+
+        // Check for adjacent 6 and 8 numbers (only if not allowed)
+        if (!allowAdjacentHighProb || !isManualMode) {
+            const highProbabilityHexes = hexes.filter(hex => hex.number === 6 || hex.number === 8);
+
+            // Check each high probability hex for adjacency with other high probability hexes
+            for (const hex of highProbabilityHexes) {
+                for (const neighborId of hex.neighbors) {
+                    const neighbor = hexes[neighborId];
+                    if ((neighbor.number === 6 || neighbor.number === 8) && neighbor.id !== hex.id) {
+                        isValid = false;
+                        message += `<div class="warning">❌ Rule violation: Hex #${hex.id} (${hex.number}) is adjacent to Hex #${neighbor.id} (${neighbor.number}). High probability numbers (6 and 8) should not be adjacent.</div>`;
+                    }
+                }
+            }
+
+            // Check if same resource type has multiple high-probability numbers
+            const resourceTypeWithHighProb = {};
+            for (const hex of highProbabilityHexes) {
+                if (hex.type !== 'desert') {
+                    if (!resourceTypeWithHighProb[hex.type]) {
+                        resourceTypeWithHighProb[hex.type] = [];
+                    }
+                    resourceTypeWithHighProb[hex.type].push(hex.id);
+                }
+            }
+
+            for (const [resourceType, hexIds] of Object.entries(resourceTypeWithHighProb)) {
+                if (hexIds.length > 1) {
+                    message += `<div class="warning">⚠️ Note: ${resourceType.charAt(0).toUpperCase() + resourceType.slice(1)} has multiple high-probability numbers on hexes #${hexIds.join(', #')}. This is allowed but could create imbalance.</div>`;
+                }
+            }
+        }
+
+        // Check resource and number token counts (only enforce limits if custom distribution is not allowed)
+        if (!allowCustomDistribution || !isManualMode) {
+            const boardType = is56PlayerMode ? "5-6" : "3-4";
+
+            // Count resources
+            const resourceCounts = {
+                brick: 0,
+                wood: 0,
+                sheep: 0,
+                wheat: 0,
+                ore: 0,
+                desert: 0
+            };
+
+            hexes.forEach(hex => {
+                if (resourceCounts.hasOwnProperty(hex.type)) {
+                    resourceCounts[hex.type]++;
+                }
+            });
+
+            // Check if any resource exceeds its limit
+            for (const [resource, count] of Object.entries(resourceCounts)) {
+                const limit = resourceLimits[boardType][resource];
+                if (count > limit) {
+                    isValid = false;
+                    message += `<div class="warning">❌ Resource rule violation: Too many ${resource} hexes (${count}/${limit}).</div>`;
+                } else if (count < limit) {
+                    message += `<div class="warning">⚠️ Note: Not enough ${resource} hexes (${count}/${limit}).</div>`;
+                }
+            }
+
+            // Count number tokens
+            const numberCounts = {
+                2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 8: 0, 9: 0, 10: 0, 11: 0, 12: 0
+            };
+
+            hexes.forEach(hex => {
+                if (numberCounts.hasOwnProperty(hex.number)) {
+                    numberCounts[hex.number]++;
+                }
+            });
+
+            // Check if any number exceeds its limit
+            for (const [number, count] of Object.entries(numberCounts)) {
+                const limit = numberLimits[boardType][number];
+                if (count > limit) {
+                    isValid = false;
+                    message += `<div class="warning">❌ Number token rule violation: Too many ${number} tokens (${count}/${limit}).</div>`;
+                } else if (count < limit) {
+                    message += `<div class="warning">⚠️ Note: Not enough ${number} tokens (${count}/${limit}).</div>`;
+                }
+            }
+        } else if (isManualMode) {
+            // Add a note that we're in custom mode
+            message += `<div style="padding: 5px; background-color: #ffe8d6; border-left: 4px solid #f4a261; margin: 10px 0;">Custom distribution mode: Standard resource and number limits are not enforced.</div>`;
+        }
+
+        // Validate port counts (always check this)
+        const portCounts = {
+            generic: 0,
+            brick: 0,
+            wood: 0,
+            sheep: 0,
+            wheat: 0,
+            ore: 0
+        };
+
+        ports.forEach(port => {
+            portCounts[port.type]++;
+        });
+
+        let portValid = true;
+        for (const [type, count] of Object.entries(portCounts)) {
+            const limit = portLimits[type];
+            if (count > limit) {
+                portValid = false;
+                message += `<div class="warning">❌ Port rule violation: Too many ${type} ports (${count}/${limit}).</div>`;
+            }
+        }
+
+        // Final validity status
+        if (isValid && portValid && message.indexOf('❌') === -1) {
+            message += '<div style="color: green; font-weight: bold; margin-top: 10px;">✓ Board layout follows all placement rules!</div>';
+        } else if (isManualMode && allowCustomDistribution) {
+            message += '<div style="color: orange; font-weight: bold; margin-top: 10px;">⚠️ Custom board with non-standard distribution.</div>';
+        }
+
+        validationMessageContainer.innerHTML = message;
+        return isValid;
+    }
+
+    function generateResourceNumberCounts() {
+        const boardType = is56PlayerMode ? "5-6" : "3-4";
+
+        // Count resources
+        const resourceCounts = {
+            brick: 0,
+            wood: 0,
+            sheep: 0,
+            wheat: 0,
+            ore: 0,
+            desert: 0
+        };
+
+        hexes.forEach(hex => {
+            if (resourceCounts.hasOwnProperty(hex.type)) {
+                resourceCounts[hex.type]++;
+            }
+        });
+
+        // Count number tokens
+        const numberCounts = {
+            2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 8: 0, 9: 0, 10: 0, 11: 0, 12: 0
+        };
+
+        hexes.forEach(hex => {
+            if (numberCounts.hasOwnProperty(hex.number)) {
+                numberCounts[hex.number]++;
+            }
+        });
+
+        // Generate HTML summary
+        let summary = `
+        <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 15px; padding: 10px; background-color: #f8f9fa; border-radius: 5px;">
+            <div>
+                <h4 style="margin-top: 0; margin-bottom: 5px;">Resource Distribution</h4>
+                <table style="border-collapse: collapse;">
+                    <tr>
+                        <th style="text-align: left; padding-right: 10px;">Resource</th>
+                        <th style="text-align: center; padding-right: 10px;">Count</th>
+                        <th style="text-align: center;">Standard</th>
+                    </tr>
+    `;
+
+        for (const [resource, count] of Object.entries(resourceCounts)) {
+            const limit = resourceLimits[boardType][resource];
+            const color = count > limit ? '#e74c3c' : count < limit ? '#f39c12' : '#2ecc71';
+
+            summary += `
+            <tr>
+                <td style="padding-right: 10px;">
+                    <div style="display: flex; align-items: center;">
+                        <div class="resource-box" style="background-color: ${resourceColors[resource]}; margin-right: 5px;"></div>
+                        ${resource.charAt(0).toUpperCase() + resource.slice(1)}
+                    </div>
+                </td>
+                <td style="text-align: center; padding-right: 10px; color: ${color};">${count}</td>
+                <td style="text-align: center;">${limit}</td>
+            </tr>
+        `;
+        }
+
+        summary += `
+            </table>
+        </div>
+        <div>
+            <h4 style="margin-top: 0; margin-bottom: 5px;">Number Token Distribution</h4>
+            <table style="border-collapse: collapse;">
+                <tr>
+                    <th style="text-align: center; padding-right: 10px;">Number</th>
+                    <th style="text-align: center; padding-right: 10px;">Count</th>
+                    <th style="text-align: center;">Standard</th>
+                </tr>
+    `;
+
+        for (const [number, count] of Object.entries(numberCounts)) {
+            const limit = numberLimits[boardType][number];
+            const color = count > limit ? '#e74c3c' : count < limit ? '#f39c12' : '#2ecc71';
+            const isRed = (number === '6' || number === '8');
+
+            summary += `
+            <tr>
+                <td style="text-align: center; padding-right: 10px; color: ${isRed ? 'red' : 'black'}; font-weight: ${isRed ? 'bold' : 'normal'};">${number}</td>
+                <td style="text-align: center; padding-right: 10px; color: ${color};">${count}</td>
+                <td style="text-align: center;">${limit}</td>
+            </tr>
+        `;
+        }
+
+        summary += `
+            </table>
+        </div>
+    </div>
+    `;
+
+        return summary;
+    }
+
+
+
+    // ===== Manual Mode Functions =====
+    function updatePlacementCounters() {
+        // Original counter update code
+        const boardType = is56PlayerMode ? "5-6" : "3-4";
+
+        // Count current resources
+        const resourceCounts = {
+            brick: 0,
+            wood: 0,
+            sheep: 0,
+            wheat: 0,
+            ore: 0,
+            desert: 0
+        };
+
+        // Count number tokens
+        const numberCounts = {
+            2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 8: 0, 9: 0, 10: 0, 11: 0, 12: 0
+        };
+
+        // Count placed resources and numbers
+        hexes.forEach(hex => {
+            if (resourceCounts.hasOwnProperty(hex.type)) {
+                resourceCounts[hex.type]++;
+            }
+
+            if (numberCounts.hasOwnProperty(hex.number)) {
+                numberCounts[hex.number]++;
+            }
+        });
+
+        // Update resource counters
+        for (const resource of Object.keys(resourceCounts)) {
+            const count = resourceCounts[resource];
+            const limit = resourceLimits[boardType][resource];
+
+            document.getElementById(`${resource}-count`).textContent = count;
+            document.getElementById(`${resource}-max`).textContent = `/${limit}`;
+
+            // Highlight if at limit
+            const countElement = document.getElementById(`${resource}-count`);
+            if (count > limit) {
+                countElement.style.color = '#e74c3c';
+            } else if (count === limit) {
+                countElement.style.color = '#2ecc71';
+            } else {
+                countElement.style.color = '';
+            }
+        }
+
+        // Update number token counters
+        for (const number of Object.keys(numberCounts)) {
+            const count = numberCounts[number];
+            const limit = numberLimits[boardType][number];
+
+            document.getElementById(`num${number}-count`).textContent = count;
+            document.getElementById(`num${number}-max`).textContent = `/${limit}`;
+
+            // Highlight if at limit
+            const countElement = document.getElementById(`num${number}-count`);
+            if (count > limit) {
+                countElement.style.color = '#e74c3c';
+            } else if (count === limit) {
+                countElement.style.color = '#2ecc71';
+            } else {
+                countElement.style.color = '';
+            }
+        }
+
+        // Update port counters
+        updatePortCounters();
+
+        // Update progress message
+        const totalHexes = hexes.length;
+        const placedHexes = hexes.filter(hex => hex.type !== 'desert' || hex.number !== 0).length;
+        const placedResources = hexes.filter(hex => hex.type !== 'desert').length;
+        const placedNumbers = hexes.filter(hex => hex.number > 0).length;
+
+        let progressMessage = '';
+        if (placedHexes === 0) {
+            progressMessage = 'Select resources and numbers to place on the board';
+        } else if (placedHexes < totalHexes) {
+            progressMessage = `Board design in progress: ${placedHexes}/${totalHexes} hexes placed`;
+        } else {
+            progressMessage = 'Board design complete! Click "Calculate Best Spots" to analyze.';
+        }
+
+        document.getElementById('layout-progress').textContent = progressMessage;
+
+        // Also update the resource tracker
+        updateResourceTracker();
+    }
+
+    function randomizeRemainingHexes() {
+        const boardType = is56PlayerMode ? "5-6" : "3-4";
+
+        // Count current resources
+        const resourceCounts = {
+            brick: 0,
+            wood: 0,
+            sheep: 0,
+            wheat: 0,
+            ore: 0,
+            desert: 0
+        };
+
+        // Count number tokens
+        const numberCounts = {
+            2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 8: 0, 9: 0, 10: 0, 11: 0, 12: 0
+        };
+
+        // Count placed resources and numbers
+        hexes.forEach(hex => {
+            if (resourceCounts.hasOwnProperty(hex.type) && hex.type !== 'desert') {
+                resourceCounts[hex.type]++;
+            }
+
+            if (numberCounts.hasOwnProperty(hex.number)) {
+                numberCounts[hex.number]++;
+            }
+        });
+
+        // Calculate remaining resources
+        const remainingResources = [];
+        for (const [resource, count] of Object.entries(resourceCounts)) {
+            if (resource !== 'desert') {  // Handle desert separately
+                const limit = resourceLimits[boardType][resource];
+                const remaining = limit - count;
+
+                for (let i = 0; i < remaining; i++) {
+                    remainingResources.push(resource);
+                }
+            }
+        }
+
+        // Calculate remaining numbers
+        const remainingNumbers = [];
+        for (const [number, count] of Object.entries(numberCounts)) {
+            const limit = numberLimits[boardType][number];
+            const remaining = limit - count;
+
+            for (let i = 0; i < remaining; i++) {
+                remainingNumbers.push(parseInt(number));
+            }
+        }
+
+        // Get remaining desert hexes
+        const desertLimit = resourceLimits[boardType].desert;
+        const desertCount = hexes.filter(hex => hex.type === 'desert' && hex.number === 0).length;
+        const remainingDeserts = Math.max(0, desertLimit - desertCount);
+
+        // Shuffle remaining resources and numbers
+        shuffle(remainingResources);
+        shuffle(remainingNumbers);
+
+        // First assign all deserts
+        const unassignedHexes = hexes.filter(hex => hex.type === 'desert' && hex.number === 0);
+
+        let desertIndex = 0;
+        let resourceIndex = 0;
+        let numberIndex = 0;
+
+        unassignedHexes.forEach(hex => {
+            if (desertIndex < remainingDeserts) {
+                // Leave as desert
+                desertIndex++;
+            } else {
+                // Assign resource
+                if (resourceIndex < remainingResources.length) {
+                    hex.type = remainingResources[resourceIndex++];
+                }
+
+                // Assign number (skipping for deserts)
+                if (hex.type !== 'desert' && numberIndex < remainingNumbers.length) {
+                    hex.number = remainingNumbers[numberIndex++];
+                }
+            }
+        });
+
+        // Handle port placement based on mode
+        if (portPlacementMode === 'standard') {
+            resetPorts();
+            setupStandardPorts();
+        } else if (portPlacementMode === 'random') {
+            resetPorts();
+            randomizePorts();
+        }
+
+        // Update counters, display, and calculate
+        updatePlacementCounters();
+        calculateBestSpots();
+        drawBoard();
+        updateBoardStats();
+        validateBoard();
+    }
+
+    // ===== Utility Functions =====
+    function getProbabilityDots(number) {
+        // Return 0 for desert (number 0)
+        if (number === 0) return 0;
+
+        // Return dots based on distance from 7
+        // 2,12 = 1 dot; 3,11 = 2 dots; 4,10 = 3 dots; 5,9 = 4 dots; 6,8 = 5 dots
+        return 6 - Math.abs(7 - number);
+    }
+
+    function toggleBoardSize() {
+        is56PlayerMode = !is56PlayerMode;
+        const toggleText = `Toggle Board Size (${is56PlayerMode ? '3-4' : '5-6'} players)`;
+
+        document.getElementById('toggle-board').textContent = toggleText;
+        document.getElementById('manual-toggle-board').textContent = toggleText;
+
+        initializeBoard();
+
+        // Update the calculations and display
+        calculateBestSpots();
+        drawBoard();
+        updateBoardStats();
+
+        // Clear validation messages
+        document.getElementById('validation-message').innerHTML = '';
+        document.getElementById('manual-validation-message').innerHTML = '';
+    }
+
+    function generateRandomBoard() {
+        let placementValid = false;
+        let attempts = 0;
+        const maxAttempts = 50; // Limit attempts to avoid infinite loop
+
+        while (!placementValid && attempts < maxAttempts) {
+            attempts++;
+
+            // Resource distribution based on board size
+            const resources = is56PlayerMode ?
+                ['desert', 'desert',
+                    'brick', 'brick', 'brick', 'brick', 'brick',
+                    'wood', 'wood', 'wood', 'wood', 'wood', 'wood',
+                    'sheep', 'sheep', 'sheep', 'sheep', 'sheep', 'sheep',
+                    'wheat', 'wheat', 'wheat', 'wheat', 'wheat', 'wheat',
+                    'ore', 'ore', 'ore', 'ore', 'ore'] :
+                ['desert',
+                    'brick', 'brick', 'brick',
+                    'wood', 'wood', 'wood', 'wood',
+                    'sheep', 'sheep', 'sheep', 'sheep',
+                    'wheat', 'wheat', 'wheat', 'wheat',
+                    'ore', 'ore', 'ore'];
+
+            // Assign resource types randomly
+            shuffle(resources);
+            for (let i = 0; i < hexes.length && i < resources.length; i++) {
+                hexes[i].type = resources[i];
+                hexes[i].number = 0; // Reset numbers
+            }
+
+            // Now assign numbers in a rule-following way
+            placementValid = assignNumbersStrategically();
+        }
+
+        // If we couldn't find a valid placement after many attempts,
+        // place randomly but warn the user
+        if (!placementValid) {
+            // Assign random numbers (less optimal fallback)
+            const numbers = is56PlayerMode ?
+                [2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 8, 8, 8, 9, 9, 9, 9, 10, 10, 10, 10, 11, 11, 11, 11, 12, 12] :
+                [2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12];
+
+            shuffle(numbers);
+            let numberIndex = 0;
+
+            for (const hex of hexes) {
+                if (hex.type === 'desert') {
+                    hex.number = 0;
+                } else if (numberIndex < numbers.length) {
+                    hex.number = numbers[numberIndex++];
+                }
+            }
+
+            document.getElementById('validation-message').innerHTML =
+                '<div class="warning">⚠️ Could not generate a perfectly balanced board after multiple attempts. Manual adjustments recommended.</div>';
+        } else {
+            document.getElementById('validation-message').innerHTML =
+                '<div style="color: green; font-weight: bold;">✓ Generated a balanced board that follows placement rules!</div>';
+        }
+
+        // Generate appropriate ports based on current mode
+        if (portPlacementMode === 'standard') {
+            resetPorts();
+            setupStandardPorts();
+        } else if (portPlacementMode === 'random') {
+            resetPorts();
+            randomizePorts();
+        }
+
+        // Update board type display
+        updateBoardTypeDisplay();
+
+        // Update counters in manual mode
+        if (isManualMode) {
+            updatePlacementCounters();
+        }
+
+        // Update the calculations and display
+        calculateBestSpots();
+        drawBoard();
+        updateBoardStats();
+    }
+
+    function assignNumbersStrategically() {
+        // Number distribution (2-12, excluding 7)
+        const numbers = is56PlayerMode ?
+            [2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 8, 8, 8, 9, 9, 9, 9, 10, 10, 10, 10, 11, 11, 11, 11, 12, 12] :
+            [2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12];
+
+        shuffle(numbers);
+
+        // Get non-desert hexes
+        const nonDesertHexes = hexes.filter(hex => hex.type !== 'desert');
+
+        // First place the high probability tokens (6 and 8) strategically
+        const highProbNumbers = numbers.filter(n => n === 6 || n === 8);
+        const placedHighProbHexes = [];
+
+        // Start with random hex for first high probability number
+        shuffle(nonDesertHexes);
+        const firstHighProbHex = nonDesertHexes[0];
+        firstHighProbHex.number = highProbNumbers[0];
+        placedHighProbHexes.push(firstHighProbHex.id);
+
+        // Place remaining high probability numbers
+        for (let i = 1; i < highProbNumbers.length; i++) {
+            // Find eligible hexes (not adjacent to any placed high probability hex)
+            const eligibleHexes = nonDesertHexes.filter(hex => {
+                if (hex.number > 0) return false; // Already has a number
+
+                // Check if adjacent to any placed high probability hex
+                for (const placedId of placedHighProbHexes) {
+                    if (hex.neighbors.includes(placedId)) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+
+            if (eligibleHexes.length === 0) {
+                // No valid placement found, return false
+                return false;
+            }
+
+            // Choose a random eligible hex
+            const chosenHex = eligibleHexes[Math.floor(Math.random() * eligibleHexes.length)];
+            chosenHex.number = highProbNumbers[i];
+            placedHighProbHexes.push(chosenHex.id);
+        }
+
+        // Now place the remaining numbers
+        const remainingNumbers = numbers.filter(n => n !== 6 && n !== 8);
+        let remainingIndex = 0;
+
+        for (const hex of nonDesertHexes) {
+            if (hex.number === 0 && remainingIndex < remainingNumbers.length) {
+                hex.number = remainingNumbers[remainingIndex++];
+            }
+        }
+
+        return true;
+    }
+
+    function useStandardLayout() {
+        const setup = is56PlayerMode ? standardSetup56 : standardSetup34;
+
+        hexes.forEach((hex, index) => {
+            if (index < setup.length) {
+                hex.type = setup[index].type;
+                hex.number = setup[index].number;
+            } else {
+                // Clear any extra hexes (shouldn't happen but just in case)
+                hex.type = 'desert';
+                hex.number = 0;
+            }
+        });
+
+        // Set up ports based on current mode
+        if (portPlacementMode === 'standard') {
+            resetPorts();
+            setupStandardPorts();
+        } else if (portPlacementMode === 'random') {
+            resetPorts();
+            randomizePorts();
+        }
+
+        // Update board type display
+        updateBoardTypeDisplay();
+
+        // Update counters in manual mode
+        if (isManualMode) {
+            updatePlacementCounters();
+        }
+
+        // Clear any validation messages
+        document.getElementById('validation-message').innerHTML = '';
+        document.getElementById('manual-validation-message').innerHTML = '';
+
+        // Update the calculations and display
+        calculateBestSpots();
+        drawBoard();
+        updateBoardStats();
+    }
+
+    function clearBoard() {
+        hexes.forEach(hex => {
+            hex.type = 'desert';
+            hex.number = 0;
+        });
+
+        // Clear ports
+        resetPorts();
+
+        // Update board type display
+        updateBoardTypeDisplay();
+
+        // Update counters in manual mode
+        if (isManualMode) {
+            updatePlacementCounters();
+        }
+
+        // Clear any validation messages
+        document.getElementById('validation-message').innerHTML = '';
+        document.getElementById('manual-validation-message').innerHTML = '';
+
+        // Update the calculations and display
+        calculateBestSpots();
+        drawBoard();
+        updateBoardStats();
+    }
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    // Initialize click handling for the canvas
+    canvas.addEventListener('click', handleCanvasClick);
+
+    function handleCanvasClick(e) {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        if (isManualMode && portPlacementMode === 'manual') {
+            // Check if we clicked on a vertex for port placement
+            for (const vertex of vertices) {
+                const distance = Math.sqrt(Math.pow(vertex.x - x, 2) + Math.pow(vertex.y - y, 2));
+
+                if (distance < 15) {
+                    if (isRemovingPort) {
+                        removePort(vertex.id);
+                    } else {
+                        addPort(vertex.id);
+                    }
+                    return;
+                }
+            }
+        }
+
+        // Check if we clicked on a hex
+        for (const hex of hexes) {
+            const distance = Math.sqrt(Math.pow(hex.x - x, 2) + Math.pow(hex.y - y, 2));
+
+            if (distance < HEX_RADIUS * 0.8) {
+                // Handle hex click based on mode
+                if (isManualMode) {
+                    // In manual mode, apply the selected resource and number
+                    const oldType = hex.type;
+                    const oldNumber = hex.number;
+
+                    // Apply new values
+                    hex.type = selectedResource;
+
+                    if (selectedResource === 'desert') {
+                        hex.number = 0;
+                    } else {
+                        hex.number = selectedNumber;
+                    }
+
+                    // Check if we're exceeding limits in non-custom mode
+                    if (!allowCustomDistribution) {
+                        const boardType = is56PlayerMode ? "5-6" : "3-4";
+
+                        // Count resources of the new type
+                        const resourceCount = hexes.filter(h => h.type === selectedResource).length;
+                        const resourceLimit = resourceLimits[boardType][selectedResource];
+
+                        // Count number tokens of the new value
+                        const numberCount = hexes.filter(h => h.number === selectedNumber).length;
+                        const numberLimit = selectedNumber > 0 ? numberLimits[boardType][selectedNumber] : 999;
+
+                        // Check if we're over limits
+                        if (resourceCount > resourceLimit) {
+                            alert(`You've exceeded the limit of ${resourceLimit} ${selectedResource} hexes. Enable custom distribution to bypass this limit.`);
+                            // Revert the change
+                            hex.type = oldType;
+                            hex.number = oldNumber;
+                            return;
+                        }
+
+                        if (numberCount > numberLimit && selectedNumber > 0) {
+                            alert(`You've exceeded the limit of ${numberLimit} tokens with number ${selectedNumber}. Enable custom distribution to bypass this limit.`);
+                            // Revert the change
+                            hex.type = oldType;
+                            hex.number = oldNumber;
+                            return;
+                        }
+
+                        // Check for adjacent high probability numbers
+                        if (!allowAdjacentHighProb && (selectedNumber === 6 || selectedNumber === 8)) {
+                            // Check neighbors for 6 or 8
+                            for (const neighborId of hex.neighbors) {
+                                const neighbor = hexes[neighborId];
+                                if (neighbor.number === 6 || neighbor.number === 8) {
+                                    alert(`You're placing a ${selectedNumber} next to a ${neighbor.number}. This breaks the adjacency rule for high probability numbers. Enable custom rules to bypass this limit.`);
+                                    // Revert the change
+                                    hex.type = oldType;
+                                    hex.number = oldNumber;
+                                    return;
+                                }
+                            }
+                        }
+                    }
+
+                    // Update placement counters
+                    updatePlacementCounters();
+
+                    // Validate the board after changes
+                    validateBoard();
+
+                    // Update the calculations and display
+                    calculateBestSpots();
+                    drawBoard();
+                    updateBoardStats();
+                } else {
+                    // In standard mode, prompt for hex properties
+                    promptHexEdit(hex);
+                }
+                break;
+            }
+        }
+    }
+
+    function updateResourceTracker() {
+        const boardType = is56PlayerMode ? "5-6" : "3-4";
+
+        // Calculate totals from the rules
+        const totalResources = {
+            brick: resourceLimits[boardType].brick,
+            wood: resourceLimits[boardType].wood,
+            sheep: resourceLimits[boardType].sheep,
+            wheat: resourceLimits[boardType].wheat,
+            ore: resourceLimits[boardType].ore,
+            desert: resourceLimits[boardType].desert
+        };
+
+        const totalNumbers = {
+            2: numberLimits[boardType][2],
+            3: numberLimits[boardType][3],
+            4: numberLimits[boardType][4],
+            5: numberLimits[boardType][5],
+            6: numberLimits[boardType][6],
+            8: numberLimits[boardType][8],
+            9: numberLimits[boardType][9],
+            10: numberLimits[boardType][10],
+            11: numberLimits[boardType][11],
+            12: numberLimits[boardType][12]
+        };
+
+        // Count what's on the board
+        const usedResources = {
+            brick: 0,
+            wood: 0,
+            sheep: 0,
+            wheat: 0,
+            ore: 0,
+            desert: 0
+        };
+
+        const usedNumbers = {
+            2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 8: 0, 9: 0, 10: 0, 11: 0, 12: 0
+        };
+
+        hexes.forEach(hex => {
+            if (usedResources.hasOwnProperty(hex.type)) {
+                usedResources[hex.type]++;
+            }
+
+            if (usedNumbers.hasOwnProperty(hex.number)) {
+                usedNumbers[hex.number]++;
+            }
+        });
+
+        // Calculate remaining
+        const remainingResources = {};
+        for (const [resource, total] of Object.entries(totalResources)) {
+            remainingResources[resource] = Math.max(0, total - usedResources[resource]);
+        }
+
+        const remainingNumbers = {};
+        for (const [number, total] of Object.entries(totalNumbers)) {
+            remainingNumbers[number] = Math.max(0, total - usedNumbers[number]);
+        }
+
+        // Update HTML for remaining tokens
+        let remainingHtml = `
+        <div style="margin-top: 15px;">
+            <h4>Remaining Resources & Tokens</h4>
+            <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+    `;
+
+        // Remaining resources
+        for (const [resource, count] of Object.entries(remainingResources)) {
+            remainingHtml += `
+            <div style="background-color: ${resourceColors[resource]}; color: ${resource === 'wheat' ? 'black' : 'white'}; padding: 3px 6px; border-radius: 3px; font-size: 12px;">
+                ${resource.charAt(0).toUpperCase() + resource.slice(1)}: ${count}
+            </div>
+        `;
+        }
+
+        // Remaining numbers
+        for (const [number, count] of Object.entries(remainingNumbers)) {
+            if (count > 0) {
+                const isRed = (number === '6' || number === '8');
+                remainingHtml += `
+                <div style="background-color: #f8f9fa; color: ${isRed ? 'red' : 'black'}; padding: 3px 6px; border-radius: 3px; font-size: 12px; border: 1px solid #ddd;">
+                    ${number}: ${count}
+                </div>
+            `;
+            }
+        }
+
+        remainingHtml += `
+            </div>
+        </div>
+    `;
+
+        // Find existing container or create it
+        let container = document.getElementById('remaining-resources-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'remaining-resources-container';
+            document.querySelector('.placement-summary').appendChild(container);
+        }
+
+        container.innerHTML = remainingHtml;
+    }
+
+    function promptHexEdit(hex) {
+        // Simple prompt for this demo - in a real app, you'd use a modal
+        const resources = ['desert', 'brick', 'wood', 'sheep', 'wheat', 'ore'];
+        const resourceType = prompt(`What resource for hex #${hex.id}?\n(desert, brick, wood, sheep, wheat, ore)`, hex.type);
+
+        if (resourceType && resources.includes(resourceType)) {
+            hex.type = resourceType;
+
+            if (resourceType === 'desert') {
+                hex.number = 0;
+            } else {
+                const num = prompt(`Enter number for ${resourceType} hex (2-12, not 7):`, hex.number || 5);
+                const number = parseInt(num);
+
+                if (!isNaN(number) && number >= 2 && number <= 12 && number !== 7) {
+                    hex.number = number;
+
+                    // Validate after setting the number
+                    validateBoard();
+                }
+            }
+
+            // Update board type display
+            updateBoardTypeDisplay();
+
+            // Update counters in manual mode
+            if (isManualMode) {
+                updatePlacementCounters();
+            }
+
+            // Update the calculations and display
+            calculateBestSpots();
+            drawBoard();
+            updateBoardStats();
+        }
+    }
+
+    // This code adds the enhanced strategy features to the Catan calculator
+
+    // ===== Settlement Location Specification =====
+    function getVertexLocationDescription(vertex) {
+        // Get connected hex IDs
+        const hexIds = vertex.hexes.map(id => `#${id}`).join(', ');
+
+        // Get resource types at this vertex
+        const resourceTypes = Array.from(vertex.resources)
+            .map(r => r.charAt(0).toUpperCase() + r.slice(1))
+            .join(', ');
+
+        // Check for port
+        let portInfo = '';
+        if (vertex.port !== null) {
+            const port = ports.find(p => p.id === vertex.port);
+            if (port) {
+                portInfo = ` with ${port.type === 'generic' ? 'a 3:1' : `a 2:1 ${port.type}`} port`;
+            }
+        }
+
+        return `Between hexes ${hexIds} (${resourceTypes})${portInfo}`;
+    }
+
+    // ===== City Upgrade Potential =====
+    function calculateCityPotential(vertex) {
+        // City upgrades need ore and wheat, so prioritize those resources
+        let cityPotential = 0;
+
+        // Get connected hexes
+        const connectedHexes = vertex.hexes.map(hexId => hexes[hexId]);
+
+        for (const hex of connectedHexes) {
+            if (hex.type === 'ore' || hex.type === 'wheat') {
+                const dotValue = getProbabilityDots(hex.number);
+                // Weight ore and wheat more heavily for city upgrades
+                cityPotential += dotValue * 1.5;
+            }
+        }
+
+        return Math.round(cityPotential * 10) / 10; // Round to 1 decimal place
+    }
+
+    // ===== Resource Production Calculations =====
+    function calculateResourceProduction(vertex) {
+        // Calculate expected production per resource type
+        const production = {
+            brick: 0,
+            wood: 0,
+            sheep: 0,
+            wheat: 0,
+            ore: 0,
+            total: 0
+        };
+
+        // Get connected hexes
+        const connectedHexes = vertex.hexes.map(hexId => hexes[hexId]);
+
+        for (const hex of connectedHexes) {
+            if (hex.type !== 'desert' && hex.number > 0) {
+                const probability = getProbabilityPercentage(hex.number);
+                production[hex.type] += probability;
+                production.total += probability;
+            }
+        }
+
+        return production;
+    }
+
+    function getProbabilityPercentage(number) {
+        // Convert number to percentage chance of being rolled
+        const probabilities = {
+            2: 2.78,
+            3: 5.56,
+            4: 8.33,
+            5: 11.11,
+            6: 13.89,
+            8: 13.89,
+            9: 11.11,
+            10: 8.33,
+            11: 5.56,
+            12: 2.78
+        };
+
+        return probabilities[number] || 0;
+    }
+
+    // ===== Trading Opportunity Analysis =====
+    function analyzeTradingOpportunities(vertex) {
+        // Analyze if this settlement has good trading opportunities
+        let tradingScore = 0;
+        let tradingNotes = [];
+
+        // Get production at this vertex
+        const production = calculateResourceProduction(vertex);
+
+        // Check if vertex has a port
+        if (vertex.port !== null) {
+            const port = ports.find(p => p.id === vertex.port);
+
+            if (port) {
+                if (port.type !== 'generic') {
+                    // For resource-specific ports, check if we produce that resource
+                    if (production[port.type] > 0) {
+                        const efficiency = production[port.type] / production.total;
+                        tradingScore += efficiency * 10;
+
+                        if (efficiency > 0.3) {
+                            tradingNotes.push(`High ${port.type} production with matching 2:1 port`);
+                        } else {
+                            tradingNotes.push(`Some ${port.type} production with matching 2:1 port`);
+                        }
+                    } else {
+                        tradingNotes.push(`2:1 ${port.type} port but no ${port.type} production`);
+                    }
+                } else {
+                    // Generic port is always somewhat useful
+                    tradingScore += 2;
+                    tradingNotes.push('3:1 generic port provides flexible trading');
+                }
+            }
+        }
+
+        // Look at resource balance
+        const productionValues = Object.values(production).filter(v => typeof v === 'number' && !isNaN(v));
+        if (productionValues.length > 0) {
+            const avgProduction = production.total / 5; // Average across 5 resource types
+
+            // Check for very high or low production of specific resources
+            for (const [resource, value] of Object.entries(production)) {
+                if (resource !== 'total' && value > 0) {
+                    if (value > avgProduction * 2) {
+                        tradingScore += 2;
+                        tradingNotes.push(`High ${resource} production good for trading`);
+                    } else if (value < avgProduction * 0.5 && value > 0) {
+                        tradingScore -= 1;
+                        // Don't add a negative note since having any resource is better than none
+                    }
+                }
+            }
+        }
+
+        return {
+            score: Math.max(0, Math.round(tradingScore)),
+            notes: tradingNotes
+        };
+    }
+
+    // Update the detailed analysis to include the new features
+    function updateDetailedAnalysis(sortedVertices) {
+        if (!sortedVertices) {
+            // Find all valid settlement vertices (those with at least 2 hexes)
+            const settlementVertices = vertices.filter(v => v.hexes.length >= 2);
+
+            // Sort vertices by value (highest first)
+            sortedVertices = [...settlementVertices].sort((a, b) => b.value - a.value);
+        }
+
+        // Display detailed analysis for top spots
+        let detailsHtml = '<p>Value analysis for top 5 settlement spots:</p>';
+
+        for (let i = 0; i < Math.min(5, sortedVertices.length); i++) {
+            const vertex = sortedVertices[i];
+
+            // Get specific location description
+            const locationDesc = getVertexLocationDescription(vertex);
+
+            // Calculate city potential
+            const cityPotential = calculateCityPotential(vertex);
+
+            // Get resource production
+            const production = calculateResourceProduction(vertex);
+
+            // Analyze trading opportunities
+            const trading = analyzeTradingOpportunities(vertex);
+
+            // Format the resource production
+            let productionHtml = '';
+            for (const [resource, value] of Object.entries(production)) {
+                if (resource !== 'total' && value > 0) {
+                    const formattedValue = value.toFixed(1);
+                    productionHtml += `
+                    <div class="detail-component">
+                        <div class="resource-box" style="background-color: ${resourceColors[resource]}"></div>
+                        ${resource.charAt(0).toUpperCase() + resource.slice(1)}:
+                        <div class="detail-value">${formattedValue}%</div>
+                    </div>
+                `;
+                }
+            }
+
+            // Format trading notes
+            let tradingHtml = '';
+            if (trading.notes.length > 0) {
+                tradingHtml = `
+                <div class="detail-component">
+                    <span>Trading notes:</span>
+                    <div class="detail-value">${trading.notes.join(', ')}</div>
+                </div>
+            `;
+            }
+
+            detailsHtml += `
+            <div style="margin-top: 15px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9f9f9;">
+                <strong>Settlement #${i+1} - Total Value: ${vertex.value}</strong><br>
+                <div style="color: #666; margin-bottom: 8px;">${locationDesc}</div>
+
+                <div class="settlement-details">
+                    <div class="detail-component">
+                        <span>Resource Probability:</span>
+                        <div class="detail-value">${vertex.valueComponents.resourceProbability}</div>
+                    </div>
+                    <div class="detail-component">
+                        <span>Resource Diversity:</span>
+                        <div class="detail-value ${vertex.valueComponents.resourceDiversity > 0 ? 'detail-positive' : ''}">${vertex.valueComponents.resourceDiversity > 0 ? '+' : ''}${vertex.valueComponents.resourceDiversity}</div>
+                    </div>
+                    <div class="detail-component">
+                        <span>Port Value:</span>
+                        <div class="detail-value ${vertex.valueComponents.portValue > 0 ? 'detail-positive' : ''}">${vertex.valueComponents.portValue > 0 ? '+' : ''}${vertex.valueComponents.portValue}</div>
+                    </div>
+                    <div class="detail-component">
+                        <span>City Upgrade Potential:</span>
+                        <div class="detail-value ${cityPotential >= 5 ? 'detail-positive' : ''}">${cityPotential}</div>
+                    </div>
+                    <div class="detail-component">
+                        <span>Trading Opportunity:</span>
+                        <div class="detail-value ${trading.score >= 3 ? 'detail-positive' : ''}">${trading.score}/10</div>
+                    </div>
+                </div>
+
+                <h4 style="margin-top: 10px; margin-bottom: 5px;">Expected Resource Production</h4>
+                <div class="settlement-details">
+                    ${productionHtml}
+                </div>
+
+                ${tradingHtml}
+
+                <div style="margin-top: 10px;">
+                    <strong>Strategy Recommendation:</strong>
+                    <span style="color: #2980b9;">
+                        ${getStrategyRecommendation(vertex, cityPotential, trading.score, production)}
+                    </span>
+                </div>
+            </div>
+        `;
+        }
+
+        document.getElementById('settlement-details').innerHTML = detailsHtml;
+    }
+
+    // Generate strategy recommendations based on the analysis
+    function getStrategyRecommendation(vertex, cityPotential, tradingScore, production) {
+        // Determine the dominant resources
+        const resources = Object.entries(production)
+            .filter(([k, v]) => k !== 'total')
+            .sort((a, b) => b[1] - a[1]);
+
+        // Get the top two resources
+        const topResources = resources.slice(0, 2).filter(r => r[1] > 0);
+        const topResourceNames = topResources.map(r => r[0].charAt(0).toUpperCase() + r[0].slice(1));
+
+        let recommendation = '';
+
+        // Check for port advantage
+        if (vertex.port !== null) {
+            const port = ports.find(p => p.id === vertex.port);
+            if (port && port.type !== 'generic' && production[port.type] > 0) {
+                recommendation += `Strong ${port.type} trading potential. `;
+            }
+        }
+
+        // Check for city upgrade potential
+        if (cityPotential >= 6) {
+            recommendation += 'Excellent for early city upgrades. ';
+        } else if (cityPotential >= 4) {
+            recommendation += 'Good for city development. ';
+        }
+
+        // Check resource diversity
+        if (vertex.resources.size >= 3) {
+            recommendation += 'Diverse resource access. ';
+        }
+
+        // Resource-specific strategies
+        if (topResourceNames.length > 0) {
+            recommendation += `Focus on leveraging ${topResourceNames.join(' and ')}. `;
+        }
+
+        // Overall strategy
+        if (vertex.value >= 9) {
+            recommendation += 'Prime settlement location worth competing for.';
+        } else if (vertex.value >= 6) {
+            recommendation += 'Solid choice for second settlement.';
+        } else {
+            recommendation += 'Consider as an expansion location.';
+        }
+
+        return recommendation;
+    }
+
+    // Update the board stats to include specific locations
+    function updateBoardStats() {
+        // Find all valid settlement vertices (those with at least 2 hexes)
+        const settlementVertices = vertices.filter(v => v.hexes.length >= 2);
+
+        // Sort vertices by value (highest first)
+        const sortedVertices = [...settlementVertices].sort((a, b) => b.value - a.value);
+
+        // Get resource distribution
+        const resourceCounts = {};
+        hexes.forEach(hex => {
+            if (hex.type !== 'desert') {
+                resourceCounts[hex.type] = (resourceCounts[hex.type] || 0) + 1;
+            }
+        });
+
+        // Display best spots with specific location descriptions
+        let bestSpotsHtml = '<p><strong>Top 5 Settlement Spots:</strong></p>';
+
+        for (let i = 0; i < Math.min(5, sortedVertices.length); i++) {
+            const vertex = sortedVertices[i];
+            const resources = Array.from(vertex.resources).map(r =>
+                `<div class="resource-box" style="background-color: ${resourceColors[r]}"></div>`
+            ).join('');
+
+            let portInfo = '';
+            if (vertex.port !== null) {
+                const port = ports.find(p => p.id === vertex.port);
+                if (port) {
+                    portInfo = ` <div class="port-icon" style="display: inline-block; background-color: ${portColors[port.type]}; width: 15px; height: 15px; font-size: 8px; text-align: center; line-height: 15px; color: ${port.type === 'wheat' ? 'black' : 'white'}; border-radius: 50%;">${port.ratio}:1</div>`;
+                }
+            }
+
+            // Calculate city potential indicator
+            const cityPotential = calculateCityPotential(vertex);
+            let cityIndicator = '';
+            if (cityPotential >= 6) {
+                cityIndicator = ' <span title="High city upgrade potential" style="color: gold; font-weight: bold;">★</span>';
+            } else if (cityPotential >= 4) {
+                cityIndicator = ' <span title="Good city upgrade potential" style="color: silver; font-weight: bold;">★</span>';
+            }
+
+            // Get location description
+            const locationDesc = getVertexLocationDescription(vertex);
+
+            bestSpotsHtml += `
+            <div style="margin-bottom: 12px; padding: 8px; border-left: 4px solid ${vertex.value >= 9 ? '#66BB6A' : vertex.value >= 6 ? '#4FC3F7' : '#FFEB3B'}; background-color: #f9f9f9;">
+                <strong>Value ${vertex.value}${cityIndicator}:</strong> ${resources}${portInfo}
+                <div style="margin-top: 4px; font-size: 0.9em; color: #666;">${locationDesc}</div>
+            </div>
+        `;
+        }
+
+        // Add settlement distribution summary
+        const valueCounts = {
+            excellent: sortedVertices.filter(v => v.value >= 9).length,
+            good: sortedVertices.filter(v => v.value >= 6 && v.value < 9).length,
+            medium: sortedVertices.filter(v => v.value >= 3 && v.value < 6).length,
+            low: sortedVertices.filter(v => v.value < 3).length
+        };
+
+        bestSpotsHtml += `<p><strong>Settlement Spots:</strong></p>
+        <div>Excellent (9+): ${valueCounts.excellent}</div>
+        <div>Good (6-8): ${valueCounts.good}</div>
+        <div>Medium (3-5): ${valueCounts.medium}</div>
+        <div>Low (0-2): ${valueCounts.low}</div>`;
+
+        document.getElementById('best-spots').innerHTML = bestSpotsHtml;
+
+        // Display resource distribution
+        let resourceHtml = '';
+        for (const [resource, count] of Object.entries(resourceCounts)) {
+            resourceHtml += `<div>
+            <div class="resource-box" style="background-color: ${resourceColors[resource]}"></div>
+            ${resource.charAt(0).toUpperCase() + resource.slice(1)}: ${count} hex${count !== 1 ? 'es' : ''}
+        </div>`;
+        }
+
+        // Add desert count
+        const desertCount = hexes.filter(h => h.type === 'desert').length;
+        resourceHtml += `<div>
+        <div class="resource-box" style="background-color: ${resourceColors.desert}"></div>
+        Desert: ${desertCount} hex${desertCount !== 1 ? 'es' : ''}
+    </div>`;
+
+        // Add port distribution
+        if (ports.length > 0) {
+            resourceHtml += `<p><strong>Port Distribution:</strong></p>`;
+
+            const portCounts = {};
+            ports.forEach(port => {
+                portCounts[port.type] = (portCounts[port.type] || 0) + 1;
+            });
+
+            for (const [type, count] of Object.entries(portCounts)) {
+                const ratio = type === 'generic' ? 3 : 2;
+                resourceHtml += `<div>
+                <div class="port-icon" style="display: inline-block; background-color: ${portColors[type]}; width: 15px; height: 15px; font-size: 8px; text-align: center; line-height: 15px; color: ${type === 'wheat' ? 'black' : 'white'}; border-radius: 50%;">${ratio}:1</div>
+                ${type.charAt(0).toUpperCase() + type.slice(1)}: ${count} port${count !== 1 ? 's' : ''}
+            </div>`;
+            }
+        }
+
+        // Add overall resource production analysis
+        resourceHtml += generateResourceProductionAnalysis();
+
+        document.getElementById('resource-distribution').innerHTML = resourceHtml;
+
+        // Update detailed analysis if it's being shown
+        if (isDetailedAnalysis) {
+            updateDetailedAnalysis(sortedVertices);
+        }
+    }
+
+    // Generate overall resource production analysis for the board
+    function generateResourceProductionAnalysis() {
+        const totalProbabilities = {
+            brick: 0,
+            wood: 0,
+            sheep: 0,
+            wheat: 0,
+            ore: 0,
+            total: 0
+        };
+
+        // Calculate total probability for each resource
+        hexes.forEach(hex => {
+            if (hex.type !== 'desert' && hex.number > 0) {
+                const probability = getProbabilityPercentage(hex.number);
+                totalProbabilities[hex.type] += probability;
+                totalProbabilities.total += probability;
+            }
+        });
+
+        // Calculate relative production percentages
+        const productionPercentages = {};
+        for (const [resource, probability] of Object.entries(totalProbabilities)) {
+            if (resource !== 'total' && totalProbabilities.total > 0) {
+                productionPercentages[resource] = (probability / totalProbabilities.total) * 100;
+            }
+        }
+
+        // Generate HTML
+        let html = `
+        <p><strong>Board Production Analysis:</strong></p>
+        <div style="margin-top: 8px;">
+    `;
+
+        // Add bar chart
+        for (const [resource, percentage] of Object.entries(productionPercentages)) {
+            const barWidth = Math.round(percentage);
+            html += `
+            <div style="display: flex; align-items: center; margin-bottom: 5px;">
+                <div class="resource-box" style="background-color: ${resourceColors[resource]}"></div>
+                <div style="width: 70px;">${resource.charAt(0).toUpperCase() + resource.slice(1)}:</div>
+                <div style="background-color: ${resourceColors[resource]}; height: 12px; width: ${barWidth}%; opacity: 0.7;"></div>
+                <div style="margin-left: 5px;">${percentage.toFixed(1)}%</div>
+            </div>
+        `;
+        }
+
+        // Add production insights
+        html += `<div style="margin-top: 10px; font-style: italic;">`;
+
+        // Check for resource imbalances
+        const avgPercentage = 20; // Ideal average (100% ÷ 5 resources)
+        const imbalancedResources = [];
+
+        for (const [resource, percentage] of Object.entries(productionPercentages)) {
+            if (percentage > avgPercentage * 1.5) {
+                imbalancedResources.push(`High ${resource} production`);
+            } else if (percentage < avgPercentage * 0.5) {
+                imbalancedResources.push(`Low ${resource} production`);
+            }
+        }
+
+        if (imbalancedResources.length > 0) {
+            html += `Production imbalances: ${imbalancedResources.join(', ')}`;
+        } else {
+            html += `This board has relatively balanced resource production`;
+        }
+
+        html += `</div></div>`;
+
+        return html;
+    }
+
+    // Enhance vertex drawing with city upgrade indicators
+    function drawVertex(vertex) {
+        // Skip vertices with less than 2 adjacent hexes (they're on the edge and not valid for settlements)
+        if (vertex.hexes.length < 2) return;
+
+        // Determine color based on value
+        let color;
+
+        if (vertex.value >= 9) {
+            color = '#66BB6A'; // Green - Excellent
+        } else if (vertex.value >= 6) {
+            color = '#4FC3F7'; // Blue - Good
+        } else if (vertex.value >= 3) {
+            color = '#FFEB3B'; // Yellow - Medium
+        } else {
+            color = '#FF5252'; // Red - Low
+        }
+
+        // Calculate city potential
+        const cityPotential = calculateCityPotential(vertex);
+
+        // Draw settlement spot
+        ctx.beginPath();
+        ctx.arc(vertex.x, vertex.y, 10, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Draw value number
+        ctx.font = 'bold 11px Arial';
+        ctx.fillStyle = (vertex.value >= 6) ? 'white' : 'black';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(vertex.value.toString(), vertex.x, vertex.y);
+
+        // Draw city potential indicator if high
+        if (cityPotential >= 5) {
+            ctx.beginPath();
+            const starSize = 4;
+            const starX = vertex.x + 8;
+            const starY = vertex.y - 8;
+
+            // Draw a simple star symbol
+            ctx.fillStyle = cityPotential >= 7 ? 'gold' : 'silver';
+            ctx.beginPath();
+            ctx.arc(starX, starY, starSize, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Add a subtle stroke
+            ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+        }
+    }
+
+    // Now, update the main calculateBestSpots function to include these new value components
+    function calculateBestSpots() {
+        // Reset all vertex values
+        vertices.forEach(vertex => {
+            vertex.value = 0;
+            vertex.resources = new Set();
+            vertex.valueComponents = {
+                resourceProbability: 0,
+                resourceDiversity: 0,
+                portValue: 0
+            };
+        });
+
+        // Calculate value for each vertex based on surrounding hexes
+        vertices.forEach(vertex => {
+            // Skip vertices with less than 2 adjacent hexes (they're on the edge and not valid for settlements)
+            if (vertex.hexes.length < 2) return;
+
+            // Get all hexes connected to this vertex
+            const connectedHexes = vertex.hexes.map(hexId => hexes[hexId]);
+
+            // Calculate base value from resource probability
+            let resourceProbabilityValue = 0;
+            for (const hex of connectedHexes) {
+                if (hex.number > 0) { // Skip desert
+                    const dotValue = getProbabilityDots(hex.number);
+                    resourceProbabilityValue += dotValue;
+                    vertex.resources.add(hex.type);
+                }
+            }
+            vertex.valueComponents.resourceProbability = resourceProbabilityValue;
+
+            // Add bonus for resource diversity
+            const uniqueResources = vertex.resources.size;
+            let diversityBonus = 0;
+            if (uniqueResources >= 3) {
+                diversityBonus = 1; // Bonus for 3+ different resources
+            }
+            vertex.valueComponents.resourceDiversity = diversityBonus;
+
+            // Add bonus for port access
+            let portValue = 0;
+            if (vertex.port !== null) {
+                const port = ports.find(p => p.id === vertex.port);
+                if (port) {
+                    if (port.type === 'generic') {
+                        portValue = 1; // Base value for 3:1 port
+                    } else {
+                        // Check if this vertex produces the port's resource
+                        if (vertex.resources.has(port.type)) {
+                            portValue = 2; // Higher value for matching resource port
+                        } else {
+                            portValue = 1; // Still valuable but not as much
+                        }
+                    }
+                }
+            }
+            vertex.valueComponents.portValue = portValue;
+
+            // Calculate total value
+            vertex.value = resourceProbabilityValue + diversityBonus + portValue;
+        });
+    }
+
+    // Add CSS for the enhanced display
+    document.head.insertAdjacentHTML('beforeend', `
+<style>
+    .detail-component {
+        display: flex;
+        align-items: center;
+        margin-bottom: 5px;
+    }
+
+    .detail-component span {
+        width: 150px;
+        font-weight: bold;
+    }
+
+    .detail-value {
+        margin-left: auto;
+    }
+
+    .detail-positive {
+        color: #27ae60;
+    }
+
+    .detail-negative {
+        color: #e74c3c;
+    }
+
+    .resource-production {
+        display: flex;
+        align-items: center;
+        margin-top: 10px;
+    }
+
+    .production-bar {
+        height: 10px;
+        background-color: #eee;
+        border-radius: 5px;
+        margin: 0 5px;
+        position: relative;
+        flex-grow: 1;
+    }
+
+    .production-fill {
+        height: 100%;
+        border-radius: 5px;
+        position: absolute;
+        left: 0;
+        top: 0;
+    }
+</style>
+`);
+
+    // Function to suggest board adjustments to fix validation issues
+    function suggestBoardAdjustments() {
+        const suggestionsContainer = document.getElementById('board-suggestions');
+        suggestionsContainer.style.display = 'block';
+        suggestionsContainer.innerHTML = '<h3 style="margin-top: 0;">Board Adjustment Suggestions</h3>';
+
+        const issues = identifyBoardIssues();
+        if (issues.length === 0) {
+            suggestionsContainer.innerHTML += '<p style="color: green;">✓ No issues found! Your board follows all official Catan rules.</p>';
+            return;
+        }
+
+        // Generate specific suggestions for each issue
+        for (const issue of issues) {
+            const suggestionItem = document.createElement('div');
+            suggestionItem.style.marginBottom = '15px';
+            suggestionItem.style.padding = '10px';
+            suggestionItem.style.borderLeft = '4px solid #3498db';
+            suggestionItem.style.backgroundColor = '#f8f9fa';
+
+            // Add the issue description
+            const issueTitle = document.createElement('h4');
+            issueTitle.style.margin = '0 0 10px 0';
+            issueTitle.style.color = '#e74c3c';
+            issueTitle.textContent = issue.title;
+            suggestionItem.appendChild(issueTitle);
+
+            // Add the issue description
+            const issueDesc = document.createElement('p');
+            issueDesc.textContent = issue.description;
+            suggestionItem.appendChild(issueDesc);
+
+            // Add specific suggestions
+            if (issue.suggestions.length > 0) {
+                const suggestionsList = document.createElement('ul');
+                suggestionsList.style.margin = '10px 0';
+                suggestionsList.style.paddingLeft = '20px';
+
+                for (const suggestion of issue.suggestions) {
+                    const listItem = document.createElement('li');
+                    listItem.style.marginBottom = '5px';
+
+                    // Create a suggestion with clickable hex IDs
+                    if (suggestion.includes('#')) {
+                        // Split the suggestion text by the hex IDs
+                        const parts = suggestion.split(/(#\d+)/g);
+
+                        for (const part of parts) {
+                            if (part.startsWith('#')) {
+                                // This is a hex ID, make it clickable
+                                const hexId = parseInt(part.substring(1));
+
+                                const button = document.createElement('button');
+                                button.textContent = part;
+                                button.style.background = 'none';
+                                button.style.border = 'none';
+                                button.style.padding = '2px 4px';
+                                button.style.color = '#3498db';
+                                button.style.fontWeight = 'bold';
+                                button.style.cursor = 'pointer';
+                                button.style.textDecoration = 'underline';
+
+                                // Add event listener to highlight the hex when clicked
+                                button.addEventListener('click', () => {
+                                    highlightHex(hexId);
+                                });
+
+                                listItem.appendChild(button);
+                            } else {
+                                // Regular text
+                                listItem.appendChild(document.createTextNode(part));
+                            }
+                        }
+                    } else {
+                        // Regular suggestion without hex IDs
+                        listItem.textContent = suggestion;
+                    }
+
+                    suggestionsList.appendChild(listItem);
+                }
+
+                suggestionItem.appendChild(suggestionsList);
+            }
+
+            // Add a quick-fix button if available
+            if (issue.quickFix) {
+                const fixButton = document.createElement('button');
+                fixButton.textContent = 'Apply Quick Fix';
+                fixButton.style.backgroundColor = '#3498db';
+                fixButton.style.color = 'white';
+                fixButton.style.border = 'none';
+                fixButton.style.padding = '8px 15px';
+                fixButton.style.borderRadius = '4px';
+                fixButton.style.cursor = 'pointer';
+                fixButton.style.marginTop = '10px';
+
+                fixButton.addEventListener('click', () => {
+                    issue.quickFix();
+                    // Re-validate and update the board
+                    validateBoard();
+                    drawBoard();
+                    updateBoardStats();
+                    updatePlacementCounters();
+                    // Update the suggestions
+                    suggestBoardAdjustments();
+                });
+
+                suggestionItem.appendChild(fixButton);
+            }
+
+            suggestionsContainer.appendChild(suggestionItem);
+        }
+
+        // Add a note about manual vs quick fixes
+        const noteElement = document.createElement('p');
+        noteElement.style.fontSize = '0.9em';
+        noteElement.style.fontStyle = 'italic';
+        noteElement.style.marginTop = '15px';
+        noteElement.innerHTML = 'Click on hex IDs to highlight them on the board. Use "Apply Quick Fix" to automatically resolve issues or make adjustments manually.';
+        suggestionsContainer.appendChild(noteElement);
+    }
+
+    // Identify all issues with the current board
+    function identifyBoardIssues() {
+        const boardType = is56PlayerMode ? "5-6" : "3-4";
+        const issues = [];
+
+        // 1. Check for adjacent high probability numbers (6 & 8)
+        const adjacencyIssues = findAdjacentHighProbabilityIssues();
+        if (adjacencyIssues.length > 0) {
+            issues.push({
+                title: "Adjacent High Probability Numbers",
+                description: "High probability numbers (6 & 8) should not be placed on adjacent hexes as this creates imbalance in the game.",
+                suggestions: adjacencyIssues.map(pair => {
+                    return `Swap the number on either ${pair[0]} or ${pair[1]} with a lower probability number.`;
+                }),
+                quickFix: () => {
+                    fixAdjacentHighProbability(adjacencyIssues[0]);
+                }
+            });
+        }
+
+        // 2. Check resource type counts
+        const resourceCounts = countResourceTypes();
+        const resourceIssues = [];
+
+        for (const [resource, count] of Object.entries(resourceCounts)) {
+            const limit = resourceLimits[boardType][resource];
+            if (count > limit) {
+                resourceIssues.push({
+                    resource,
+                    count,
+                    limit,
+                    excess: count - limit
+                });
+            } else if (count < limit && resource !== 'desert') {
+                resourceIssues.push({
+                    resource,
+                    count,
+                    limit,
+                    shortage: limit - count
+                });
+            }
+        }
+
+        if (resourceIssues.length > 0) {
+            const excessResources = resourceIssues.filter(issue => issue.excess);
+            const shortageResources = resourceIssues.filter(issue => issue.shortage);
+
+            const suggestions = [];
+
+            // Suggest hex changes based on excesses and shortages
+            if (excessResources.length > 0 && shortageResources.length > 0) {
+                // We can suggest direct swaps
+                for (const excess of excessResources) {
+                    for (const shortage of shortageResources) {
+                        const hexesToChange = findHexesOfType(excess.resource);
+                        if (hexesToChange.length > 0) {
+                            suggestions.push(`Change ${excess.excess} ${excess.resource} hex(es) to ${shortage.resource}. For example, change ${hexesToChange[0]} from ${excess.resource} to ${shortage.resource}.`);
+                        }
+                    }
+                }
+            } else if (excessResources.length > 0) {
+                // Just excess resources
+                for (const excess of excessResources) {
+                    const hexesToChange = findHexesOfType(excess.resource);
+                    if (hexesToChange.length > 0) {
+                        suggestions.push(`Remove ${excess.excess} ${excess.resource} hex(es). For example, change ${hexesToChange[0]} to a different resource.`);
+                    }
+                }
+            } else if (shortageResources.length > 0) {
+                // Just shortages
+                for (const shortage of shortageResources) {
+                    suggestions.push(`Add ${shortage.shortage} more ${shortage.resource} hex(es) by replacing other resources.`);
+                }
+            }
+
+            issues.push({
+                title: "Incorrect Resource Distribution",
+                description: `The standard ${boardType} player game requires specific quantities of each resource type.`,
+                suggestions,
+                quickFix: resourceIssues.length > 0 ? () => {
+                    balanceResourceDistribution(resourceIssues);
+                } : null
+            });
+        }
+
+        // 3. Check number token counts
+        const numberCounts = countNumberTokens();
+        const numberIssues = [];
+
+        for (const [number, count] of Object.entries(numberCounts)) {
+            const limit = numberLimits[boardType][number];
+            if (count > limit) {
+                numberIssues.push({
+                    number,
+                    count,
+                    limit,
+                    excess: count - limit
+                });
+            } else if (count < limit) {
+                numberIssues.push({
+                    number,
+                    count,
+                    limit,
+                    shortage: limit - count
+                });
+            }
+        }
+
+        if (numberIssues.length > 0) {
+            const excessNumbers = numberIssues.filter(issue => issue.excess);
+            const shortageNumbers = numberIssues.filter(issue => issue.shortage);
+
+            const suggestions = [];
+
+            // Suggest number changes based on excesses and shortages
+            if (excessNumbers.length > 0 && shortageNumbers.length > 0) {
+                // We can suggest direct swaps
+                for (const excess of excessNumbers) {
+                    for (const shortage of shortageNumbers) {
+                        const hexesToChange = findHexesWithNumber(parseInt(excess.number));
+                        if (hexesToChange.length > 0) {
+                            suggestions.push(`Change ${excess.excess} number ${excess.number} token(s) to ${shortage.number}. For example, change ${hexesToChange[0]} from ${excess.number} to ${shortage.number}.`);
+                        }
+                    }
+                }
+            } else if (excessNumbers.length > 0) {
+                // Just excess numbers
+                for (const excess of excessNumbers) {
+                    const hexesToChange = findHexesWithNumber(parseInt(excess.number));
+                    if (hexesToChange.length > 0) {
+                        suggestions.push(`Remove ${excess.excess} number ${excess.number} token(s). For example, change ${hexesToChange[0]}.`);
+                    }
+                }
+            } else if (shortageNumbers.length > 0) {
+                // Just shortages
+                for (const shortage of shortageNumbers) {
+                    suggestions.push(`Add ${shortage.shortage} more number ${shortage.number} token(s) by replacing other numbers.`);
+                }
+            }
+
+            issues.push({
+                title: "Incorrect Number Token Distribution",
+                description: `The standard ${boardType} player game requires specific quantities of each number token.`,
+                suggestions,
+                quickFix: numberIssues.length > 0 ? () => {
+                    balanceNumberDistribution(numberIssues);
+                } : null
+            });
+        }
+
+        // 4. Check if same resource has multiple high probability numbers
+        const highProbResourceIssues = findResourcesWithMultipleHighProb();
+        if (highProbResourceIssues.length > 0) {
+            issues.push({
+                title: "Multiple High Probability Numbers on Same Resource",
+                description: "While allowed, having multiple high probability numbers (6 & 8) on the same resource type creates imbalance in resource production.",
+                suggestions: highProbResourceIssues.map(issue => {
+                    return `Consider redistributing high probability numbers on ${issue.resource}. Currently on hexes: ${issue.hexes.map(h => `#${h}`).join(', ')}.`;
+                }),
+                quickFix: highProbResourceIssues.length > 0 ? () => {
+                    redistributeHighProbability(highProbResourceIssues[0]);
+                } : null
+            });
+        }
+
+        // 5. Check for port distribution issues
+        const portIssues = findPortDistributionIssues();
+        if (portIssues.length > 0) {
+            issues.push({
+                title: "Incorrect Port Distribution",
+                description: "Standard Catan has 4 generic (3:1) ports and one of each resource-specific (2:1) port.",
+                suggestions: portIssues,
+                quickFix: () => {
+                    resetPorts();
+                    setupStandardPorts();
+                    drawBoard();
+                }
+            });
+        }
+
+        return issues;
+    }
+
+    // Find adjacent high probability numbers (6 & 8)
+    function findAdjacentHighProbabilityIssues() {
+        const pairs = [];
+        const highProbabilityHexes = hexes.filter(hex => hex.number === 6 || hex.number === 8);
+
+        // Check each high probability hex for adjacency with other high probability hexes
+        for (const hex of highProbabilityHexes) {
+            for (const neighborId of hex.neighbors) {
+                const neighbor = hexes[neighborId];
+                if ((neighbor.number === 6 || neighbor.number === 8) && neighbor.id > hex.id) {
+                    // Use IDs to avoid duplicates and create a consistent reference
+                    pairs.push([`#${hex.id} (${hex.number})`, `#${neighbor.id} (${neighbor.number})`]);
+                }
+            }
+        }
+
+        return pairs;
+    }
+
+    // Count resource types on the board
+    function countResourceTypes() {
+        const counts = {
+            brick: 0,
+            wood: 0,
+            sheep: 0,
+            wheat: 0,
+            ore: 0,
+            desert: 0
+        };
+
+        hexes.forEach(hex => {
+            if (counts.hasOwnProperty(hex.type)) {
+                counts[hex.type]++;
+            }
+        });
+
+        return counts;
+    }
+
+    // Count number tokens on the board
+    function countNumberTokens() {
+        const counts = {
+            2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 8: 0, 9: 0, 10: 0, 11: 0, 12: 0
+        };
+
+        hexes.forEach(hex => {
+            if (counts.hasOwnProperty(hex.number)) {
+                counts[hex.number]++;
+            }
+        });
+
+        return counts;
+    }
+
+    // Find resources with multiple high probability numbers
+    function findResourcesWithMultipleHighProb() {
+        const resourceHighProb = {};
+
+        // Find all hexes with 6 or 8
+        hexes.forEach(hex => {
+            if ((hex.number === 6 || hex.number === 8) && hex.type !== 'desert') {
+                if (!resourceHighProb[hex.type]) {
+                    resourceHighProb[hex.type] = [];
+                }
+                resourceHighProb[hex.type].push(hex.id);
+            }
+        });
+
+        // Filter for resources with multiple high prob numbers
+        return Object.entries(resourceHighProb)
+            .filter(([resource, hexIds]) => hexIds.length > 1)
+            .map(([resource, hexIds]) => ({ resource, hexes: hexIds }));
+    }
+
+    // Find port distribution issues
+    function findPortDistributionIssues() {
+        const issues = [];
+        const portCounts = {
+            generic: 0,
+            brick: 0,
+            wood: 0,
+            sheep: 0,
+            wheat: 0,
+            ore: 0
+        };
+
+        ports.forEach(port => {
+            portCounts[port.type]++;
+        });
+
+        // Check if we have the correct number of each port type
+        for (const [type, count] of Object.entries(portCounts)) {
+            const limit = portLimits[type];
+            if (count > limit) {
+                issues.push(`Too many ${type} ports (${count}/${limit}).`);
+            } else if (count < limit) {
+                issues.push(`Not enough ${type} ports (${count}/${limit}).`);
+            }
+        }
+
+        return issues;
+    }
+
+    // Helper functions to find hexes of specific types or numbers
+    function findHexesOfType(resourceType) {
+        return hexes.filter(hex => hex.type === resourceType).map(hex => `#${hex.id}`);
+    }
+
+    function findHexesWithNumber(number) {
+        return hexes.filter(hex => hex.number === number).map(hex => `#${hex.id}`);
+    }
+
+    // Highlight a specific hex on the board
+    function highlightHex(hexId) {
+        // Clear previous highlights
+        clearHighlights();
+
+        // Find the hex
+        const hex = hexes.find(h => h.id === hexId);
+        if (!hex) return;
+
+        // Draw a highlight around the hex
+        ctx.beginPath();
+
+        for (let i = 0; i < 6; i++) {
+            const angle = (Math.PI / 3) * i - Math.PI / 6;
+            const x = hex.x + HEX_RADIUS * 1.1 * Math.cos(angle);
+            const y = hex.y + HEX_RADIUS * 1.1 * Math.sin(angle);
+
+            if (i === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        }
+
+        ctx.closePath();
+        ctx.strokeStyle = '#e74c3c';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        // Scroll to the hex
+        const canvas = document.getElementById('catan-board');
+        canvas.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // After 3 seconds, clear the highlight
+        setTimeout(clearHighlights, 3000);
+    }
+
+    // Clear all highlights on the board
+    function clearHighlights() {
+        drawBoard();
+    }
+
+    // Quick fix functions
+    function fixAdjacentHighProbability(pair) {
+        // Extract hex IDs from the formatted strings
+        const hexId1 = parseInt(pair[0].match(/#(\d+)/)[1]);
+        const hexId2 = parseInt(pair[1].match(/#(\d+)/)[1]);
+
+        // Find candidate numbers to swap with
+        const availableNumbers = [2, 3, 4, 5, 9, 10, 11, 12];
+        const numberCounts = countNumberTokens();
+
+        // Find hex with number 6 or 8
+        const hex1 = hexes.find(h => h.id === hexId1);
+        const hex2 = hexes.find(h => h.id === hexId2);
+
+        // Randomly select one of the hexes to change
+        const hexToChange = Math.random() < 0.5 ? hex1 : hex2;
+
+        // Find a suitable replacement number
+        let newNumber = null;
+        for (const num of availableNumbers) {
+            // Skip if number is already at its limit
+            const boardType = is56PlayerMode ? "5-6" : "3-4";
+            if (numberCounts[num] < numberLimits[boardType][num]) {
+                newNumber = num;
+                break;
+            }
+        }
+
+        // If we found a suitable number, change the hex
+        if (newNumber !== null) {
+            hexToChange.number = newNumber;
+        }
+    }
+
+    function balanceResourceDistribution(issues) {
+        const excessResources = issues.filter(issue => issue.excess);
+        const shortageResources = issues.filter(issue => issue.shortage);
+
+        // If we have both excesses and shortages, we can swap
+        if (excessResources.length > 0 && shortageResources.length > 0) {
+            // Start with the biggest discrepancies
+            excessResources.sort((a, b) => b.excess - a.excess);
+            shortageResources.sort((a, b) => b.shortage - a.shortage);
+
+            const excessResource = excessResources[0].resource;
+            const shortageResource = shortageResources[0].resource;
+
+            // Find a hex with the excess resource
+            const hexesToChange = hexes.filter(hex => hex.type === excessResource);
+            if (hexesToChange.length > 0) {
+                hexesToChange[0].type = shortageResource;
+            }
+        }
+    }
+
+    function balanceNumberDistribution(issues) {
+        const excessNumbers = issues.filter(issue => issue.excess);
+        const shortageNumbers = issues.filter(issue => issue.shortage);
+
+        // If we have both excesses and shortages, we can swap
+        if (excessNumbers.length > 0 && shortageNumbers.length > 0) {
+            // Start with the biggest discrepancies
+            excessNumbers.sort((a, b) => b.excess - a.excess);
+            shortageNumbers.sort((a, b) => b.shortage - a.shortage);
+
+            const excessNumber = parseInt(excessNumbers[0].number);
+            const shortageNumber = parseInt(shortageNumbers[0].number);
+
+            // Find a hex with the excess number
+            const hexesToChange = hexes.filter(hex => hex.number === excessNumber);
+            if (hexesToChange.length > 0) {
+                hexesToChange[0].number = shortageNumber;
+            }
+        }
+    }
+
+    function redistributeHighProbability(issue) {
+        // Get the hex IDs with the high probability numbers on the same resource
+        const hexIds = issue.hexes;
+        if (hexIds.length < 2) return;
+
+        // Keep one 6 or 8 on this resource, swap the others
+        const hexToKeep = hexes.find(h => h.id === hexIds[0]);
+        const hexesToChange = hexIds.slice(1).map(id => hexes.find(h => h.id === id));
+
+        // Find other resource types with no high probability numbers
+        const resourcesWithoutHighProb = Object.keys(resourceColors)
+            .filter(resource => resource !== 'desert' && !findResourcesWithMultipleHighProb().some(i => i.resource === resource));
+
+        // Find suitable hexes of other resource types to swap numbers with
+        if (resourcesWithoutHighProb.length > 0 && hexesToChange.length > 0) {
+            const otherResourceHexes = hexes.filter(hex =>
+                resourcesWithoutHighProb.includes(hex.type) &&
+                hex.number !== 6 &&
+                hex.number !== 8 &&
+                hex.type !== 'desert');
+
+            if (otherResourceHexes.length > 0) {
+                // Swap the numbers
+                const hexToSwap = otherResourceHexes[0];
+                const hexToChange = hexesToChange[0];
+
+                const tempNumber = hexToSwap.number;
+                hexToSwap.number = hexToChange.number;
+                hexToChange.number = tempNumber;
+            }
+        }
+    }
+
+    // Add this CSS for the suggestions container
+    document.head.insertAdjacentHTML('beforeend', `
+<style>
+    .board-suggestions {
+        max-height: 500px;
+        overflow-y: auto;
+        transition: all 0.3s ease;
+        font-size: clamp(12px, 3vw, 14px);
+    }
+
+    .board-suggestions h3 {
+        color: #3498db;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 8px;
+    }
+
+    .board-suggestions button:hover {
+        background-color: #2980b9;
+    }
+</style>
+`);
+</script>
 </body>
 </html>
